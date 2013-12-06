@@ -10,7 +10,11 @@ program
     .parse(process.argv);
 
 if (typeof program.readSensor === 'string') {
-    console.log('TODO: read: ', program.readSensor);
+    main.getNamedSensor(program.readSensor).then(function(sensor) {
+        return sensor.getCurrentReading();
+    }).then(function(reading) {
+        console.log(reading);
+    }).done();
 } else if (program.listSensors) {
     main.getAvailableSensors().then(function(sensorList) {
         sensorList.forEach(function(sensor) {

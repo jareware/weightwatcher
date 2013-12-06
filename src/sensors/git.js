@@ -1,15 +1,28 @@
 var Q = require('q');
 var exec = require('./../utils/process').exec;
 
-var GIT_LOG = 'git log -1 --pretty=format:"%H %ad" --date=iso';
+var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
 
+// Allows this sensor to provide identity for a persisted entry
 exports.entryIdentityProvider = function() {
-    return exec(GIT_LOG).then(function(stdout) {
-        var match = stdout.match(/^(\w+) (.*)$/);
-        if (match) {
-            return match[1]
+    return exports.getCurrentReading().then(function(reading) {
+        return reading.hash;
+    });
+};
+
+// Promises the current value(s) of this sensor
+exports.getCurrentReading = function() {
+    return exec(GIT_LOG).then(function(output) {
+        output = output.split('\n');
+        if (output.length < 4) {
+            return Q.reject('Unparseable git output: ' + output);
         } else {
-            return Q.reject('Unparseable git output: ' + stdout);
+            return {
+                hash: output[0],
+                date: output[1],
+                author: output[2],
+                message: output.slice(3).join('\n')
+            };
         }
     });
 };
