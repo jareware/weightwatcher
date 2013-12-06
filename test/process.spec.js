@@ -1,5 +1,4 @@
 var assert = require('assert'); // http://nodejs.org/api/assert.html
-
 var process = require('../src/utils/process');
 
 describe('utils/process', function() {

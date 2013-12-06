@@ -1,7 +1,7 @@
-var GIT_LOG = 'git log -1 --pretty=format:"%H %ad" --date=iso';
-
 var Q = require('q');
 var exec = require('./../utils/process').exec;
+
+var GIT_LOG = 'git log -1 --pretty=format:"%H %ad" --date=iso';
 
 exports.entryIdentityProvider = function() {
     return exec(GIT_LOG).then(function(stdout) {
