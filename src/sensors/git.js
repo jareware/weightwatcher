@@ -3,11 +3,9 @@ var exec = require('./../utils/process').exec;
 
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
 
-// Allows this sensor to provide identity for a persisted entry
+// Allows this sensor to provide identity for a log entry
 exports.entryIdentityProvider = function() {
-    return exports.getCurrentReading().then(function(reading) {
-        return reading.hash;
-    });
+    return exports.getCurrentReading().get('hash');
 };
 
 // Promises the current value(s) of this sensor
@@ -21,7 +19,7 @@ exports.getCurrentReading = function() {
                 hash: output[0],
                 date: output[1],
                 author: output[2],
-                message: output.slice(3).join('\n')
+                message: output.slice(3).join('\n').trim()
             };
         }
     });

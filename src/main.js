@@ -5,6 +5,7 @@ var path = require('path');
 var SENSOR_PATH = __dirname + '/sensors';
 
 // Promises an array of modules, with the "sensorName" property attached
+// TODO: Priority ordering..?
 exports.getAvailableSensors = function() {
     return FS.list(SENSOR_PATH).then(function(fileNames) {
         return fileNames.map(function(fileName) {
@@ -26,6 +27,21 @@ exports.getNamedSensor = function(name) {
             return sensorList[0];
         } else {
             return Q.reject('Unknown sensor name "' + name + '"');
+        }
+    });
+};
+
+// Promises the currently applicable identity for a new log entry being written
+exports.getCurrentIdentity = function() {
+    return exports.getAvailableSensors().then(function(sensorList) {
+        return sensorList.filter(function(sensor) {
+            return !!sensor.entryIdentityProvider;
+        });
+    }).then(function(applicableSensorList) {
+        if (applicableSensorList.length) {
+            return applicableSensorList[0].entryIdentityProvider();
+        } else {
+            return Q.reject('No identity-providing sensors available (that\'s odd)');
         }
     });
 };
