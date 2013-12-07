@@ -8,6 +8,7 @@ program
     .option('-l, --list-sensors', 'Print out the currently available sensors')
     .option('-i, --read-identity', 'Print out the identity that would be used')
     .option('-s, --read-sensor [name]', 'Read and print out the current value of named sensor')
+    .option('-w, --write-entry', 'Store the current readings of all sensors to a log entry')
     .parse(process.argv);
 
 function output(input) {
@@ -15,24 +16,24 @@ function output(input) {
 }
 
 if (typeof program.readSensor === 'string') {
-    main
-        .getNamedSensor(program.readSensor)
+    main.getNamedSensor(program.readSensor)
         .invoke('getCurrentReading')
         .then(output)
         .done();
 } else if (program.readIdentity) {
-    main
-        .getCurrentIdentity()
+    main.getCurrentIdentity()
         .then(output)
         .done();
 } else if (program.listSensors) {
-    main
-        .getAvailableSensors()
+    main.getAvailableSensors()
         .then(function(sensorList) {
             sensorList.forEach(function(sensor) {
                 output(sensor.sensorName);
             });
         }).done();
+} else if (program.writeEntry) {
+    main.writeLogEntry()
+        .done();
 } else {
     program.help();
 }

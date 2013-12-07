@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var Q = require('q');
 var FS = require('q-io/fs');
 var path = require('path');
@@ -44,4 +45,24 @@ exports.getCurrentIdentity = function() {
             return Q.reject('No identity-providing sensors available (that\'s odd)');
         }
     });
+};
+
+// Promises the module currently responsible for persisting log entries
+function getPersistenceLayer() {
+    return Q(require('./persistence/json'));
+}
+
+// Promises to write the current readings of all applicable sensors to a log entry
+// TODO: Serialize requests for currentReadings..?
+exports.writeLogEntry = function() {
+    var sensors = exports.getAvailableSensors();
+    var names = sensors.then(_).invoke('pluck', 'sensorName').invoke('value');
+    var readings = sensors.then(_).invoke('invoke', 'getCurrentReading').invoke('value').then(Q.all);
+    var entryData = Q.all([ names, readings ]).spread(function(names, readings) {
+        return _(names).zip(readings).object().value();
+    });
+    return Q.all([ getPersistenceLayer(), exports.getCurrentIdentity(), entryData ])
+        .spread(function(persistenceLayer, entryUID, entryData) {
+            return persistenceLayer.writeLogEntry(entryUID, entryData);
+        });
 };
