@@ -1,7 +1,11 @@
+var _ = require('lodash');
 var Q = require('q');
-var exec = require('./../utils/process').exec;
+var exec = require('../utils/process').exec;
 
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
+var DEFAULT_CONFIG = {
+    pwd: '.'
+};
 
 // Allows this sensor to provide identity for a log entry
 exports.entryIdentityProvider = function() {
@@ -9,8 +13,10 @@ exports.entryIdentityProvider = function() {
 };
 
 // Promises the current value(s) of this sensor
-exports.getCurrentReading = function() {
-    return exec(GIT_LOG).then(function(output) {
+exports.getCurrentReading = function(config) {
+    config = _.extend({}, DEFAULT_CONFIG, config);
+    var cmd = 'cd ' + config.pwd + ';' + GIT_LOG;
+    return exec(cmd).then(function(output) {
         output = output.split('\n');
         if (output.length < 4) {
             return Q.reject('Unparseable git output: ' + output);

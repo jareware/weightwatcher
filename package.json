@@ -4,7 +4,7 @@
   "description": "",
   "main": "weightwatcher.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --reporter spec test"
+    "test": "./node_modules/mocha/bin/mocha --reporter spec test/unit"
   },
   "author": "Jarno Rantanen <jarno@jrw.fi>",
   "license": "MIT",

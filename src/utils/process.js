@@ -1,6 +1,7 @@
 var cp = require('child_process');
 var Q = require('q');
 
+// Promises shell output for given command, rejecting on either non-zero exit code or any stderr-output
 exports.exec = function(command) {
     var def = Q.defer();
     cp.exec(command, function(error, stdout, stderr) {

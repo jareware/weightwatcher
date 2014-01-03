@@ -1,3 +1,4 @@
-.idea
-node_modules
-devtools-log.json
+.DS_Store
+
+/.idea
+/node_modules
