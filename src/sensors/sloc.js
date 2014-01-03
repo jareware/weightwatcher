@@ -11,7 +11,8 @@ var DEFAULT_CONFIG = {
     ignoreGlobs: [ 'node_modules/**/*' ],
     greps: {
         todo: /TODO/
-    }
+    },
+    groups: {}
 };
 
 // Returns an object containing all interesting information regarding given path
@@ -28,12 +29,25 @@ function analysePath(config) {
         _.each(fileDetails.greps, function(count, title) {
             memo.greps[title] += count;
         });
+        _.each(memo.groups, function(groupDetails, title) {
+            var matchesGroup = minimatch(fileDetails.filename, path.join(config.pwd, config.groups[title]), { matchBase: true });
+            if (matchesGroup) {
+                groupDetails.files++;
+                groupDetails.sloc += fileDetails.sloc;
+            }
+        });
         return memo;
     }, {
         files: 0,
         sloc: 0,
         greps: _(config.greps).map(function(needle, title) {
             return [ title, 0 ];
+        }).object().value(),
+        groups: _(config.groups).map(function(x, title) {
+            return [ title, {
+                files: 0,
+                sloc: 0
+            }];
         }).object().value()
     })
 }
