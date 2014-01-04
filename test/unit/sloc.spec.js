@@ -12,33 +12,27 @@ describe('sensors/sloc', function() {
                 pwd: FIXTURE_PATH + 'demo-workspace-1'
             }).then(function(reading) {
                 assert.deepEqual(reading, {
-                    files: 1 + 1 + 1,
-                    sloc: 1 + 2 + 5,
-                    greps: {
-                        todo: 0 + 0 + 1
-                    },
-                    groups: {}
+                    main: {
+                        files: 1 + 1 + 1,
+                        sloc: 1 + 2 + 5,
+                        todos: 0 + 0 + 1
+                    }
                 });
             }).done(done);
         });
 
-        it('supports grouping subsets of files', function(done) {
+        it('supports custom includes', function(done) {
             sloc.getCurrentReading({
                 pwd: FIXTURE_PATH + 'demo-workspace-1',
                 greps: {},
-                groups: {
+                includeGlobs: {
                     bees: 'b*.js'
                 }
             }).then(function(reading) {
                 assert.deepEqual(reading, {
-                    files: 1 + 1 + 1,
-                    sloc: 1 + 2 + 5,
-                    greps: {},
-                    groups: {
-                        bees: {
-                            files: 1 + 1,
-                            sloc: 1 + 5
-                        }
+                    bees: {
+                        files: 1 + 1,
+                        sloc: 1 + 5
                     }
                 });
             }).done(done);
