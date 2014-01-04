@@ -18,58 +18,75 @@ var DEFAULT_CONFIG = {
     }
 };
 
+// Modifies (IN-PLACE!) the first given object by incrementing its counters based on the second given object
+function extendSums(intoObject, fromObject) {
+    _.each(fromObject, function(value, key) {
+        if (_.isNumber(value)) {
+            if (!_.has(intoObject, key)) {
+                intoObject[key] = 0;
+            } else if (!_.isNumber(intoObject[key])) {
+                return;
+            }
+            intoObject[key] += value;
+        }
+    });
+    return intoObject;
+}
+
+// Returns an updated version of the given config, with the "pwd" applied to all paths, and paths resolved
+function resolveConfigPaths(config) {
+    var prefix = function(glob) {
+        return path.join(path.resolve(config.pwd), glob);
+    };
+    return _.extend({}, config, {
+        pwd: prefix('.'),
+        includeGlobs: _.mapValues(config.includeGlobs, prefix),
+        excludeGlobs: _.map(config.excludeGlobs, prefix)
+    });
+}
+
+// Returns a list of file paths that match the given includeGlob, excluding ones that match one or more given excludeGlobs
+function listFiles(includeGlob, excludeGlobs) {
+    return glob.sync(includeGlob).filter(function(filePath) {
+        return !_.some(excludeGlobs, function(excludeGlob) {
+            return minimatch(filePath, excludeGlob, { matchBase: true });
+        });
+    })
+}
+
 // Returns an object containing all interesting information regarding given path
-function analysePath(config, includeGlob) {
-    return glob.sync(path.join(config.pwd, includeGlob)).filter(function(filePath) { // note that this glob will ignore dotfiles
-        return !_.some(config.excludeGlobs, function(ignore) {
-            return minimatch(filePath, path.join(config.pwd, ignore), { matchBase: true });
-        });
-    }).map(function(filePath) {
-        return analyseFile(config, filePath);
-    }).reduce(function(memo, fileDetails) {
-        memo.files += fileDetails.files;
-        memo.sloc += fileDetails.sloc;
-        _.each(fileDetails.greps, function(count, label) {
-            memo[label] += count;
-        });
-        return memo;
-    }, _.extend({
-        files: 0,
-        sloc: 0
-    }, _(config.greps).map(function(x, label) {
-        return [ label, 0 ];
-    }).object().value()))
+function analyzeFiles(config, includeGlob) {
+    var toAnalyzedFiles = _.partial(analyzeFile, config);
+    var fileList = listFiles(includeGlob, config.excludeGlobs);
+    return fileList.map(toAnalyzedFiles).reduce(extendSums, {})
 }
 
 // Returns an object containing all interesting information regarding given file
-function analyseFile(config, filePath) {
+function analyzeFile(config, filePath) {
     try {
         var source = fs.readFileSync(filePath).toString();
-        return {
-            filename: filePath,
+        var standardProps = {
             files: 1,
-            sloc: source.split('\n').length,
-            greps: _(config.greps).map(function(needle, label) {
-                return [ label, source.split(needle).length - 1 ]
-            }).object().value()
+            sloc: source.split('\n').length
         };
-    } catch (e) {
-        return {
-            filename: filePath,
-            files: 0,
-            sloc: 0,
-            greps: {}
-        };
+        var grepProps = _.mapValues(config.greps, function(needle) {
+            return source.split(needle).length - 1;
+        });
+        return _.extend(standardProps, grepProps);
+    } catch (e) { // filePath probably wasn't a file at all -> contribute nothing
+        return {};
     }
 }
 
 // Promises the current value(s) of this sensor
 exports.getCurrentReading = function(config) {
-    config = _.extend({}, DEFAULT_CONFIG, config);
-    config.pwd = path.resolve(config.pwd); // make sure we have an absolute path, so minimatching works as expected
-    var obj = {};
-    _(config.includeGlobs).each(function(includeGlob, label) {
-        obj[label] = analysePath(config, includeGlob);
-    });
-    return Q(obj);
+    config = resolveConfigPaths(_.extend({}, DEFAULT_CONFIG, config));
+    var toResults = _.partial(analyzeFiles, config);
+    return Q(_.mapValues(config.includeGlobs, toResults));
 };
+
+// Export specific internals for unit-testing only
+exports.__test = {
+    extendSums: extendSums,
+    resolveConfigPaths: resolveConfigPaths
+}
