@@ -8,9 +8,11 @@ var minimatch = require('minimatch');
 var DEFAULT_CONFIG = {
     pwd: '.',
     includeGlobs: {
-        main: '**/*.{html,js,css}'
+        all: '**/*.{html,js,css}'
     },
-    excludeGlobs: [ 'node_modules/**/*' ],
+    excludeGlobs: [
+        'node_modules/**/*'
+    ],
     greps: {
         todos: /TODO/
     }

@@ -12,7 +12,7 @@ describe('sensors/sloc', function() {
                 pwd: FIXTURE_PATH + 'demo-workspace-1'
             }).then(function(reading) {
                 assert.deepEqual(reading, {
-                    main: {
+                    all: {
                         files: 1 + 1 + 1,
                         sloc: 1 + 2 + 5,
                         todos: 0 + 0 + 1
