@@ -89,4 +89,4 @@ exports.getCurrentReading = function(config) {
 exports.__test = {
     extendSums: extendSums,
     resolveConfigPaths: resolveConfigPaths
-}
+};

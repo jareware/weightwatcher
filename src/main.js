@@ -36,11 +36,11 @@ exports.getNamedSensor = function(name) {
 exports.getCurrentIdentity = function() {
     return exports.getAvailableSensors().then(function(sensorList) {
         return sensorList.filter(function(sensor) {
-            return !!sensor.entryIdentityProvider;
+            return !!sensor.getCurrentIdentity;
         });
     }).then(function(applicableSensorList) {
         if (applicableSensorList.length) {
-            return applicableSensorList[0].entryIdentityProvider();
+            return applicableSensorList[0].getCurrentIdentity();
         } else {
             return Q.reject('No identity-providing sensors available (that\'s odd)');
         }

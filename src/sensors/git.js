@@ -8,7 +8,7 @@ var DEFAULT_CONFIG = {
 };
 
 // Allows this sensor to provide identity for a log entry
-exports.entryIdentityProvider = function() {
+exports.getCurrentIdentity = function() {
     return exports.getCurrentReading().get('hash');
 };
 

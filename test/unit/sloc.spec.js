@@ -1,7 +1,7 @@
 var assert = require('assert'); // http://nodejs.org/api/assert.html
 var sloc = require('../../src/sensors/sloc');
 
-var FIXTURE_PATH = __dirname + '/../fixture/';
+var WORKSPACE_PATH = __dirname + '/../fixture/demo-workspace-sloc';
 
 describe('sensors/sloc', function() {
 
@@ -62,7 +62,7 @@ describe('sensors/sloc', function() {
 
         it('counts lines and greps correctly', function(done) {
             sloc.getCurrentReading({
-                pwd: FIXTURE_PATH + 'demo-workspace-1'
+                pwd: WORKSPACE_PATH
             }).then(function(reading) {
                 assert.deepEqual(reading, {
                     all: {
@@ -76,7 +76,7 @@ describe('sensors/sloc', function() {
 
         it('supports custom includes', function(done) {
             sloc.getCurrentReading({
-                pwd: FIXTURE_PATH + 'demo-workspace-1',
+                pwd: WORKSPACE_PATH,
                 greps: {},
                 includeGlobs: {
                     bees: 'b*.js'
