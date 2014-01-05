@@ -11,7 +11,7 @@ var DEFAULT_CONFIG = {
         all: '**/*.{html,js,css}'
     },
     excludeGlobs: [
-        'node_modules/**/*'
+        '**/node_modules/**/*'
     ],
     greps: {
         todos: /TODO/
