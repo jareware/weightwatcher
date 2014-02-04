@@ -4,7 +4,8 @@ var main = require('../../src/main');
 
 var WORKSPACE_PATH = __dirname + '/../fixture/demo-workspace-config';
 var SAMPLE_MODULES = [
-    { sensorName: 'sloc' }
+    { sensorName: 'sloc' },
+    { sensorName: 'madeUpSensor' }
 ];
 
 describe('main', function() {
@@ -22,43 +23,31 @@ describe('main', function() {
             process.chdir(pwd); // restore pwd
         });
 
-        it('loads global config', function(done) {
+        it('loads config and augments with implicit "pwd" key', function(done) {
             main.getCurrentConfiguration(SAMPLE_MODULES).then(function(config) {
-                assert.deepEqual(config, { foobar: 'bazbar' });
+                assert.deepEqual(config, {
+                    foobar: 'bazbar',
+                    sloc: {
+                        pwd: path.resolve(WORKSPACE_PATH), // this is automatically given to all sensor configs
+                        includeGlobs: 'bla'
+                    },
+                    madeUpSensor: {
+                        pwd: path.resolve(WORKSPACE_PATH) // this is automatically given to all sensor configs
+                    }
+                });
             }).done(done);
         });
 
         it('defaults to empty config if file not found', function(done) {
             process.chdir('..');
             main.getCurrentConfiguration(SAMPLE_MODULES).then(function(config) {
-                assert.deepEqual(config, {});
-            }).done(done);
-        });
-
-        it('loads sensor-specific config', function(done) {
-            main.getCurrentConfiguration(SAMPLE_MODULES, 'sloc').then(function(config) {
                 assert.deepEqual(config, {
-                    pwd: path.resolve(WORKSPACE_PATH), // this is automatically given to all sensor configs
-                    includeGlobs: {
-                        js: '*.js'
+                    sloc: {
+                        pwd: path.resolve(WORKSPACE_PATH + '/..') // this is automatically given to all sensor configs
+                    },
+                    madeUpSensor: {
+                        pwd: path.resolve(WORKSPACE_PATH + '/..') // this is automatically given to all sensor configs
                     }
-                });
-            }).done(done);
-        });
-
-        it('defaults to empty config for unknown sensors', function(done) {
-            main.getCurrentConfiguration(SAMPLE_MODULES, 'herpderp').then(function(config) {
-                assert.deepEqual(config, {
-                    pwd: path.resolve(WORKSPACE_PATH) // this is automatically given to all sensor configs
-                });
-            }).done(done);
-        });
-
-        it('defaults to empty sensor-specific config if file not found', function(done) {
-            process.chdir('..');
-            main.getCurrentConfiguration(SAMPLE_MODULES, 'sloc').then(function(config) {
-                assert.deepEqual(config, {
-                    pwd: path.resolve(WORKSPACE_PATH + '/..') // this is automatically given to all sensor configs
                 });
             }).done(done);
         });

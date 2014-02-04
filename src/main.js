@@ -33,20 +33,18 @@ exports.getPersistenceLayer = function() {
     return Q(require('./persistence/json'));
 };
 
-// Promises the global configuration object, or its named subset
-exports.getCurrentConfiguration = function(sensorModules, sensorName) {
+// Promises the global configuration object, prepared to contain config for given modules
+exports.getCurrentConfiguration = function(sensorModules) {
     var configFile = path.resolve('./weightwatcher-config.js');
     return FS.isFile(configFile).then(function(isFile) {
         return isFile ? require(configFile) : {};
     }).then(function(config) {
-        if (sensorName) { // sensor-specific config
-            return Q(config[sensorName] || {}).then(function(sensorConfig) {
-                return _.extend(sensorConfig, {
-                    pwd: path.resolve('.') // augment the config with implicit values
-                });
+        _(sensorModules).pluck('sensorName').each(function(sensorName) {
+            config[sensorName] = config[sensorName] || {};
+            _.extend(config[sensorName], {
+                pwd: path.resolve('.') // augment the config with implicit values
             });
-        } else { // global config
-            return _.omit(config, _.pluck(sensorModules, 'sensorName'));
-        }
+        });
+        return config;
     });
 };
