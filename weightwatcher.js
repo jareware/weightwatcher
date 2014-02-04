@@ -27,11 +27,13 @@ if (program.listSensors) {
 
 } else if (typeof program.readSensor === 'string') {
 
-    Q.all([
-        main.getAvailableSensors(),
-        program.readSensor,
-        main.getCurrentConfiguration(program.readSensor)
-    ]).spread(main.getCurrentReading).then(output).done();
+    main.getAvailableSensors().then(function(sensorModules) {
+        return Q.all([
+            sensorModules,
+            program.readSensor,
+            main.getCurrentConfiguration(program.readSensor)
+        ]);
+    }).spread(main.getCurrentReading).then(output).done();
 
 } else if (program.writeEntry) {
 

@@ -25,7 +25,7 @@ exports.getCurrentIdentity = function(sensorModules) {
 // Promises the current reading of the named sensor (the given sensorConfig is passed along)
 exports.getCurrentReading = function(sensorModules, sensorName, sensorConfig) {
     var readingProvider = _(sensorModules).where({ sensorName: sensorName }).pluck('getCurrentReading').first();
-    return readingProvider ? readingProvider(sensorConfig) : Q.reject('No such sensor "' + sensorName + '"');
+    return readingProvider ? readingProvider(sensorConfig[sensorName]) : Q.reject('No such sensor "' + sensorName + '"');
 };
 
 // Promises the module currently responsible for persisting log entries
