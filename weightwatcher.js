@@ -1,39 +1,39 @@
 #!/usr/bin/env node
 
 var program = require('commander');
+var _ = require('lodash');
+var Q = require('q');
 var main = require('./src/main');
 
 program
     .version('0.0.0')
-    .option('-l, --list-sensors', 'Print out the currently available sensors')
-    .option('-i, --read-identity', 'Print out the identity that would be used')
-    .option('-s, --read-sensor [name]', 'Read and print out the current value of named sensor')
-    .option('-w, --write-entry', 'Store the current readings of all sensors to a log entry')
+    .option('-l, --list-sensors', 'print out the currently available sensors')
+    .option('-i, --read-identity', 'print out the identity that would be used')
+    .option('-s, --read-sensor [name]', 'print out the current reading of named sensor')
     .parse(process.argv);
 
 function output(input) {
     console.log(input);
 }
 
-if (typeof program.readSensor === 'string') {
-    main.getNamedSensor(program.readSensor)
-        .invoke('getCurrentReading')
-        .then(output)
-        .done();
+if (program.listSensors) {
+
+    main.getAvailableSensors().then(_).invoke('pluck', 'sensorName').invoke('each', output).done();
+
 } else if (program.readIdentity) {
-    main.getCurrentIdentity()
-        .then(output)
-        .done();
-} else if (program.listSensors) {
-    main.getAvailableSensors()
-        .then(function(sensorList) {
-            sensorList.forEach(function(sensor) {
-                output(sensor.sensorName);
-            });
-        }).done();
-} else if (program.writeEntry) {
-    main.writeLogEntry()
-        .done();
+
+    main.getAvailableSensors().then(main.getCurrentIdentity).then(output).done();
+
+} else if (typeof program.readSensor === 'string') {
+
+    Q.all([
+        main.getAvailableSensors(),
+        program.readSensor,
+        main.getCurrentConfiguration(program.readSensor)
+    ]).spread(main.getCurrentReading).then(output).done();
+
 } else {
+
     program.help();
+
 }
