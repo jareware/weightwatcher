@@ -1,4 +1,5 @@
 var path = require('path');
+var Q = require('q');
 var assert = require('assert'); // http://nodejs.org/api/assert.html
 var main = require('../../src/main');
 
@@ -50,6 +51,38 @@ describe('main', function() {
                     }
                 });
             }).done(done);
+        });
+
+    });
+
+    describe('writeLogEntry', function() {
+
+        it('persists the expected data', function(done) {
+            var entries = [];
+            var fakePersistence = {
+                writeLogEntry: function(entryUID, entryData) {
+                    entries.push(Array.prototype.slice.call(arguments));
+                }
+            };
+            var sensorModules = [{
+                sensorName: 'fakeSensor',
+                getCurrentIdentity: function() {
+                    return 'id#1';
+                },
+                getCurrentReading: function() {
+                    return { count: 123 };
+                }
+            }];
+            Q.all([
+                sensorModules,
+                main.getCurrentConfiguration(sensorModules),
+                main.getCurrentIdentity(sensorModules),
+                fakePersistence
+            ]).spread(main.writeLogEntry).then(function(returnValue) {
+                assert.deepEqual(entries, [[ 'id#1', { fakeSensor: { count: 123 }}]]);
+                assert.deepEqual(returnValue, { fakeSensor: { count: 123 }});
+            }).done(done);
+
         });
 
     });

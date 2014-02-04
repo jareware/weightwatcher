@@ -48,3 +48,16 @@ exports.getCurrentConfiguration = function(sensorModules) {
         return config;
     });
 };
+
+// Promises to write the current readings of all applicable sensors to a log entry
+exports.writeLogEntry = function(sensorModules, sensorConfig, currentIdentity, persistenceLayer) {
+    return Q.all(sensorModules.map(function(sensorModule) {
+        return sensorModule.getCurrentReading(sensorConfig[sensorModule.sensorName]);
+    })).then(function(data) {
+        return _(sensorModules).pluck('sensorName').zip(data).object().value();
+    }).then(function(payload) {
+        return Q(persistenceLayer.writeLogEntry(currentIdentity, payload)).then(function() {
+            return payload;
+        });
+    });
+};
