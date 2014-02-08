@@ -1,7 +1,8 @@
+var path = require('path');
 var assert = require('assert'); // http://nodejs.org/api/assert.html
 var sloc = require('../../src/sensors/sloc');
 
-var WORKSPACE_PATH = __dirname + '/../fixture/demo-workspace-sloc';
+var PWD = path.resolve(__dirname + '/../fixture/sloc') + '/';
 
 describe('sensors/sloc', function() {
 
@@ -55,6 +56,7 @@ describe('sensors/sloc', function() {
                     'Some random grep': /grep/
                 }
             };
+            // console.log('\n', actual, '\n', expected);
             assert.deepEqual(actual, expected);
         });
 
@@ -79,39 +81,65 @@ describe('sensors/sloc', function() {
                     exclude: []
                 }
             };
+            // console.log('\n', actual, '\n', expected);
             assert.deepEqual(actual, expected);
         });
 
     });
 
-    xdescribe('getCurrentReading', function() {
+    describe('listFiles', function() {
+
+        it('expands given globs', function() {
+            var actual = sloc.__test.listFiles([ PWD + '*.js' ], []);
+            var expected = [
+                PWD + 'bar.js',
+                PWD + 'baz.js',
+                PWD + 'foo.js',
+                PWD + 'trap.js'
+            ];
+            // console.log('\n', actual, '\n', expected);
+            assert.deepEqual(actual, expected);
+        });
+
+        it('deduplicates matches', function() {
+            var actual = sloc.__test.listFiles([ PWD + 'b*.js', PWD + 'bar.js' ], []);
+            var expected = [
+                PWD + 'bar.js',
+                PWD + 'baz.js'
+            ];
+            // console.log('\n', actual, '\n', expected);
+            assert.deepEqual(actual, expected);
+        });
+
+        it('respects given ignore globs', function() {
+            var actual = sloc.__test.listFiles([ PWD + '*.js' ], [ PWD + 'b*.js' ]);
+            var expected = [
+                PWD + 'foo.js',
+                PWD + 'trap.js'
+            ];
+            // console.log('\n', actual, '\n', expected);
+            assert.deepEqual(actual, expected);
+        });
+
+    });
+
+    describe('getCurrentReading', function() {
 
         it('counts lines and greps correctly', function(done) {
             sloc.getCurrentReading({
-                pwd: WORKSPACE_PATH
-            }).then(function(reading) {
-                assert.deepEqual(reading, {
-                    all: {
-                        files: 1 + 1 + 1,
-                        sloc: 1 + 2 + 5,
-                        todos: 0 + 0 + 1
-                    }
-                });
-            }).done(done);
-        });
-
-        it('supports custom includes', function(done) {
-            sloc.getCurrentReading({
-                pwd: WORKSPACE_PATH,
-                greps: {},
-                includeGlobs: {
-                    bees: 'b*.js'
+                pwd: PWD,
+                exclude: '**/.*',
+                'Web code': {
+                    include: '**/*.{html,js,css}',
+                    exclude: '**/node_modules/**/*',
+                    TODO: /TODO/
                 }
             }).then(function(reading) {
                 assert.deepEqual(reading, {
-                    bees: {
-                        files: 1 + 1,
-                        sloc: 1 + 5
+                    'Web code': {
+                        files: 1 + 1 + 1,
+                        lines: 1 + 2 + 5,
+                        TODO:  0 + 0 + 1
                     }
                 });
             }).done(done);

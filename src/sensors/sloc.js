@@ -5,18 +5,36 @@ var path = require('path');
 var glob = require('glob');
 var minimatch = require('minimatch');
 
-var DEFAULT_CONFIG = {
-    pwd: '.',
-    includeGlobs: {
-        all: '**/*.{html,js,css}'
-    },
-    excludeGlobs: [
-        '**/node_modules/**/*'
-    ],
-    greps: {
-        todos: /TODO/
-    }
+// Public API of this module:
+exports.getCurrentReading = getCurrentReading;
+
+// Expose specific internals for unit-testing only:
+exports.__test = {
+    extendSums: extendSums,
+    normalizeConfig: normalizeConfig,
+    listFiles: listFiles
 };
+
+return; // end of module public API
+
+// Promises the current value(s) of this sensor
+function getCurrentReading(sensorConfig) {
+
+    var config = normalizeConfig(sensorConfig);
+    var categories = _.omit(config, 'pwd', 'exclude');
+
+    return Q(_.mapValues(categories, function(category) {
+
+        var categoryGreps = _.omit(category, 'include', 'exclude');
+        var toAnalyzedFiles = _.partial(analyzeFile, categoryGreps);
+        var combinedExcludes = config.exclude.concat(category.exclude);
+        var matchingFiles = listFiles(category.include, combinedExcludes);
+
+        return matchingFiles.map(toAnalyzedFiles).reduce(extendSums, {});
+
+    }));
+
+}
 
 // Modifies (IN-PLACE!) the first given object by incrementing its counters based on the second given object
 function extendSums(intoObject, fromObject) {
@@ -33,7 +51,7 @@ function extendSums(intoObject, fromObject) {
     return intoObject;
 }
 
-// Returns an updated version of the given config, with the "pwd" applied to all paths, and paths resolved
+// Returns a config object with all standard properties filled in, and all paths/globs resolved to absolute ones
 function normalizeConfig(config) {
 
     function expandPath(pathSpec) {
@@ -69,31 +87,26 @@ function normalizeConfig(config) {
 
 }
 
-// Returns a list of file paths that match the given includeGlob, excluding ones that match one or more given excludeGlobs
-function listFiles(includeGlob, excludeGlobs) {
-    return glob.sync(includeGlob).filter(function(filePath) {
+// Returns a list of file paths that match the given includeGlobs, excluding ones that match one or more given excludeGlobs
+function listFiles(includeGlobs, excludeGlobs) {
+    return _(includeGlobs).map(function(includeGlob) {
+        return glob.sync(includeGlob);
+    }).flatten().unique().filter(function(filePath) {
         return !_.some(excludeGlobs, function(excludeGlob) {
-            return minimatch(filePath, excludeGlob, { matchBase: true });
+            return minimatch(filePath, excludeGlob);
         });
-    })
-}
-
-// Returns an object containing all interesting information regarding given path
-function analyzeFiles(config, includeGlob) {
-    var toAnalyzedFiles = _.partial(analyzeFile, config);
-    var fileList = listFiles(includeGlob, config.excludeGlobs);
-    return fileList.map(toAnalyzedFiles).reduce(extendSums, {})
+    }).value();
 }
 
 // Returns an object containing all interesting information regarding given file
-function analyzeFile(config, filePath) {
+function analyzeFile(greps, filePath) {
     try {
         var source = fs.readFileSync(filePath).toString();
         var standardProps = {
             files: 1,
-            sloc: source.split('\n').length
+            lines: source.split('\n').length
         };
-        var grepProps = _.mapValues(config.greps, function(needle) {
+        var grepProps = _.mapValues(greps, function(needle) {
             return source.split(needle).length - 1;
         });
         return _.extend(standardProps, grepProps);
@@ -101,16 +114,3 @@ function analyzeFile(config, filePath) {
         return {};
     }
 }
-
-// Promises the current value(s) of this sensor
-exports.getCurrentReading = function(config) {
-    config = resolveConfigPaths(_.extend({}, DEFAULT_CONFIG, config));
-    var toResults = _.partial(analyzeFiles, config);
-    return Q(_.mapValues(config.includeGlobs, toResults));
-};
-
-// Export specific internals for unit-testing only
-exports.__test = {
-    extendSums: extendSums,
-    normalizeConfig: normalizeConfig
-};
