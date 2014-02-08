@@ -34,15 +34,39 @@ function extendSums(intoObject, fromObject) {
 }
 
 // Returns an updated version of the given config, with the "pwd" applied to all paths, and paths resolved
-function resolveConfigPaths(config) {
-    var prefix = function(glob) {
-        return path.join(path.resolve(config.pwd), glob);
+function normalizeConfig(config) {
+
+    function expandPath(pathSpec) {
+        if (_.isString(pathSpec)) {
+            return expandPath([ pathSpec ]);
+        } else if (_.isArray(pathSpec)) {
+            return _.map(pathSpec, function(glob) {
+                return path.join(path.resolve(config.pwd), glob);
+            });
+        } else {
+            return [];
+        }
+    }
+
+    var standardFields = {
+        pwd: path.resolve(config.pwd),
+        exclude: expandPath(config.exclude)
     };
-    return _.extend({}, config, {
-        pwd: prefix('.'),
-        includeGlobs: _.mapValues(config.includeGlobs, prefix),
-        excludeGlobs: _.map(config.excludeGlobs, prefix)
-    });
+
+    var categoryFields = _(config).omit('pwd', 'exclude').mapValues(function(category) {
+        if (_.isString(category)) {
+            return {
+                include: expandPath(category),
+                exclude: []
+            };
+        } else {
+            var standardFields = _(category).pick('include', 'exclude').defaults({ exclude: [] }).mapValues(expandPath).value();
+            return _.extend(category, standardFields);
+        }
+    }).value();
+
+    return _.extend(categoryFields, standardFields);
+
 }
 
 // Returns a list of file paths that match the given includeGlob, excluding ones that match one or more given excludeGlobs
@@ -88,5 +112,5 @@ exports.getCurrentReading = function(config) {
 // Export specific internals for unit-testing only
 exports.__test = {
     extendSums: extendSums,
-    resolveConfigPaths: resolveConfigPaths
+    normalizeConfig: normalizeConfig
 };
