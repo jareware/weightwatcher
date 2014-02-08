@@ -23,28 +23,15 @@ if (program.listSensors) {
 
 } else if (program.readIdentity) {
 
-    main.getAvailableSensors().then(main.getCurrentIdentity).then(output).done();
+    main.getCurrentIdentity().then(output).done();
 
 } else if (typeof program.readSensor === 'string') {
 
-    main.getAvailableSensors().then(function(sensorModules) {
-        return Q.all([
-            sensorModules,
-            program.readSensor,
-            main.getCurrentConfiguration(program.readSensor)
-        ]);
-    }).spread(main.getCurrentReading).then(output).done();
+    main.getCurrentReading(program.readSensor).then(output).done();
 
 } else if (program.writeEntry) {
 
-    main.getAvailableSensors().then(function(sensorModules) {
-        return Q.all([
-            sensorModules,
-            main.getCurrentConfiguration(sensorModules),
-            main.getCurrentIdentity(sensorModules),
-            main.getPersistenceLayer()
-        ]);
-    }).spread(main.writeLogEntry).then(output).done();
+    main.writeLogEntry().then(output).done();
 
 } else {
 
