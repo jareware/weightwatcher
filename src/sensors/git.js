@@ -3,19 +3,22 @@ var Q = require('q');
 var exec = require('../utils/process').exec;
 
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
-var DEFAULT_CONFIG = {
-    pwd: '.'
-};
 
 // Allows this sensor to provide identity for a log entry
-exports.getCurrentIdentity = function() {
-    return exports.getCurrentReading().get('hash');
+exports.getCurrentIdentity = function(sensorConfig) {
+    return getCurrentCommit(sensorConfig).get('date');
 };
 
 // Promises the current value(s) of this sensor
-exports.getCurrentReading = function(config) {
-    config = _.extend({}, DEFAULT_CONFIG, config);
-    var cmd = 'cd ' + config.pwd + ';' + GIT_LOG;
+exports.getCurrentReading = function(sensorConfig) {
+    return getCurrentCommit(sensorConfig).then(function(commit) {
+        return _.pick(commit, 'hash');
+    });
+};
+
+// Promises the "git log" object for the HEAD commit
+function getCurrentCommit(sensorConfig) {
+    var cmd = 'cd ' + sensorConfig.pwd + ';' + GIT_LOG;
     return exec(cmd).then(function(output) {
         output = output.split('\n');
         if (output.length < 4) {
@@ -29,4 +32,4 @@ exports.getCurrentReading = function(config) {
             };
         }
     });
-};
+}

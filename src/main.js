@@ -20,11 +20,19 @@ exports.getAvailableSensors = function() {
 
 // Promises the currently applicable identity for a new log entry being written
 exports.getCurrentIdentity = function() {
-    return exports.getAvailableSensors().then(function(sensorModules) {
-        var idProvider = _(sensorModules).pluck('getCurrentIdentity').compact().first();
-        return idProvider ? idProvider() : Q.reject('No identity-providing sensors available (that\'s odd)');
+    return Q.all([
+        exports.getAvailableSensors(),
+        exports.getCurrentConfiguration()
+    ]).spread(function(sensorModules, config) {
+        var idProvider = _(sensorModules).filter(function(sensorModule) {
+            return !!sensorModule.getCurrentIdentity;
+        }).first();
+        if (idProvider) {
+            return idProvider.getCurrentIdentity(config[idProvider.sensorName]);
+        } else {
+            return Q.reject('No identity-providing sensors available (that\'s odd)');
+        }
     });
-
 };
 
 // Promises the current reading of the named sensor
