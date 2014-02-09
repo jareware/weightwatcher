@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, height=device-height" />
+    <title>weightwatcher</title>
+
+    <style type="text/css">
+        /* TODO */
+    </style>
+
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+</head>
+<body>
+
+    <div id="container" style="min-width: 300px; height: 500px; margin: 0 auto"></div>
+
+    <script>
+        (function() { "use strict";
+
+            $.get('weightwatcher-data-copy.json', function(data) {
+                renderChart(combineSeries(data));
+            });
+
+            return;
+
+            function combineSeries(rawData) {
+                var series = [
+                    {
+                        type: 'line',
+                        name: 'Lines of code',
+                        data: []
+                    }
+                ];
+                Object.keys(rawData).forEach(function(identity) {
+                    var entry = rawData[identity];
+                    series[0].data.push(
+                        [ new Date(identity).getTime(), entry.sloc['Application code'].lines ]
+                    );
+                });
+                series[0].data.sort(function(a, b) {
+                    return a[0] - b[0];
+                });
+                return series;
+            }
+
+            function renderChart(series) {
+
+                $('#container').highcharts({
+                    chart: {
+                        zoomType: 'x',
+                        spacingRight: 20
+                    },
+                    title: {
+                        text: 'Weightwatcher'
+                    },
+                    subtitle: {
+                        text: document.ontouchstart === undefined ?
+                            'Click and drag in the plot area to zoom in' :
+                            'Pinch the chart to zoom in'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        maxZoom: 1 * 24 * 3600000, // 1 day
+                        title: {
+                            text: null
+                        }
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Lines of code'
+                        }
+                    },
+                    tooltip: {
+                        shared: true
+                    },
+                    legend: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        line: {
+                            lineWidth: 1,
+                            marker: {
+                                enabled: false
+                            },
+                            shadow: false,
+                            states: {
+                                hover: {
+                                    lineWidth: 1
+                                }
+                            },
+                            threshold: null
+                        }
+                    },
+                    series: series
+                });
+
+            }
+
+        })();
+    </script>
+
+</body>
+</html>
