@@ -1,6 +1,6 @@
 module.exports = {
     foobar: 'bazbar',
     sloc: {
-        includeGlobs: 'bla'
+        includeGlobs: 'bla TODO'
     }
 };
