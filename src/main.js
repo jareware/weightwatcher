@@ -5,6 +5,8 @@ var path = require('path');
 
 var SENSOR_PATH = __dirname + '/sensors';
 
+var DEFAULT_GLOBAL_EXCLUDES = '**/.*';
+
 // Promises an array of modules, with the "sensorName" property attached
 exports.getAvailableSensors = function() {
     return FS.list(SENSOR_PATH).then(function(fileNames) {
@@ -53,7 +55,9 @@ exports.getCurrentConfiguration = function() {
             _(sensorModules).pluck('sensorName').each(function(sensorName) {
                 config[sensorName] = config[sensorName] || {};
                 _.extend(config[sensorName], {
-                    pwd: path.resolve('.') // augment the config with implicit values
+                    // Augment each sensor's config with the implicit values:
+                    pwd: path.resolve('.'),
+                    exclude: DEFAULT_GLOBAL_EXCLUDES
                 });
             });
             return config;

@@ -1,6 +1,8 @@
 module.exports = {
     foobar: 'bazbar',
     sloc: {
-        includeGlobs: 'bla TODO'
+        pwd: 'this should be overwritten',
+        exclude: 'this too',
+        what: 'ever'
     }
 };

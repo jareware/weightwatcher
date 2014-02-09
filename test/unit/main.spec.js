@@ -4,11 +4,15 @@ var Q = require('q');
 var assert = require('assert'); // http://nodejs.org/api/assert.html
 var main = require('../../src/main');
 
-var PWD = __dirname + '/../fixture/main';
+var PWD = path.resolve(__dirname + '/../fixture/main');
 var SAMPLE_MODULES = [
     { sensorName: 'sloc' },
     { sensorName: 'madeUpSensor' }
 ];
+
+function diff(actual, expected) {
+    console.log('\n--- actual ---\n', actual, '\n--- expected ---\n', expected);
+}
 
 describe('main', function() {
 
@@ -28,34 +32,48 @@ describe('main', function() {
             process.chdir(backupPwd); // restore pwd
         });
 
-        it('loads config and augments with implicit "pwd" key', function(done) {
+        it('loads config and augments with implicit keys', function(done) {
             main.getAvailableSensors = _.constant(Q(SAMPLE_MODULES));
-            main.getCurrentConfiguration().then(function(config) {
-                assert.deepEqual(config, {
+            main.getCurrentConfiguration().then(function(actual) {
+                var expected = {
+                    // This is a top-level config:
                     foobar: 'bazbar',
+                    // This sensor has some custom config:
                     sloc: {
-                        pwd: path.resolve(PWD), // this is automatically given to all sensor configs
-                        includeGlobs: 'bla'
+                        // These are automatically given to all sensor configs:
+                        pwd: PWD,
+                        exclude: '**/.*',
+                        // These are custom config for the sensor:
+                        what: 'ever'
                     },
+                    // This sensor doesn't have any config so it just gets the defaults:
                     madeUpSensor: {
-                        pwd: path.resolve(PWD) // this is automatically given to all sensor configs
+                        // These are automatically given to all sensor configs:
+                        pwd: PWD,
+                        exclude: '**/.*'
                     }
-                });
+                };
+                // diff(actual, expected);
+                assert.deepEqual(actual, expected);
             }).done(done);
         });
 
         it('defaults to empty config if file not found', function(done) {
             process.chdir('..');
             main.getAvailableSensors = _.constant(Q(SAMPLE_MODULES));
-            main.getCurrentConfiguration().then(function(config) {
-                assert.deepEqual(config, {
+            main.getCurrentConfiguration().then(function(actual) {
+                var expected = {
                     sloc: {
-                        pwd: path.resolve(PWD + '/..') // this is automatically given to all sensor configs
+                        pwd: path.resolve(PWD + '/..'),
+                        exclude: '**/.*'
                     },
                     madeUpSensor: {
-                        pwd: path.resolve(PWD + '/..') // this is automatically given to all sensor configs
+                        pwd: path.resolve(PWD + '/..'),
+                        exclude: '**/.*'
                     }
-                });
+                };
+                // diff(actual, expected);
+                assert.deepEqual(actual, expected);
             }).done(done);
         });
 
