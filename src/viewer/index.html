@@ -19,30 +19,45 @@
     <script>
         (function() { "use strict";
 
-            $.get('weightwatcher-data-copy.json', function(data) {
+            $.getJSON('weightwatcher-data.json', function(data) {
                 renderChart(combineSeries(data));
             });
 
             return;
 
             function combineSeries(rawData) {
-                var series = [
-                    {
-                        type: 'line',
-                        name: 'Lines of code',
-                        data: []
-                    }
-                ];
-                Object.keys(rawData).forEach(function(identity) {
-                    var entry = rawData[identity];
-                    series[0].data.push(
-                        [ new Date(identity).getTime(), entry.sloc['Application code'].lines ]
-                    );
-                });
-                series[0].data.sort(function(a, b) {
-                    return a[0] - b[0];
+                var series = getSLOCSeries(rawData);
+                series.forEach(function(currentSeries) {
+                    currentSeries.data.sort(function(a, b) {
+                        return a[0] - b[0]; // sort by timestamps
+                    });
                 });
                 return series;
+            }
+
+            function getSLOCSeries(rawData) {
+                var seriesMap = {};
+                Object.keys(rawData).forEach(function(identity) {
+                    var entry = rawData[identity];
+                    Object.keys(entry.sloc).forEach(function(category) { // e.g. "Web code"
+                        Object.keys(entry.sloc[category]).forEach(function(metric) { // e.g. "files"
+                            var key = category + ': ' + metric;
+                            if (!seriesMap[key]) {
+                                seriesMap[key] = [];
+                            }
+                            seriesMap[key].push(
+                                [ new Date(identity).getTime(), entry.sloc[category][metric] ]
+                            );
+                        });
+                    });
+                });
+                return Object.keys(seriesMap).map(function(key) {
+                    return {
+                        type: 'line',
+                        name: key,
+                        data: seriesMap[key]
+                    };
+                });
             }
 
             function renderChart(series) {
@@ -68,15 +83,20 @@
                         }
                     },
                     yAxis: {
+                        allowDecimals: false,
+                        min: 0,
                         title: {
-                            text: 'Lines of code'
+                            text: null
                         }
                     },
                     tooltip: {
                         shared: true
                     },
                     legend: {
-                        enabled: false
+                        layout: 'vertical',
+                        align: 'right',
+                        verticalAlign: 'middle',
+                        borderWidth: 0
                     },
                     plotOptions: {
                         line: {
