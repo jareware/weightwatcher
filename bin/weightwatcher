@@ -3,7 +3,7 @@
 var program = require('commander');
 var _ = require('lodash');
 var Q = require('q');
-var main = require('./src/main');
+var main = require(__dirname + '/../src/main');
 
 program
     .version('0.0.0')
