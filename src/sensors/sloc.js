@@ -88,10 +88,12 @@ function normalizeConfig(config) {
 }
 
 // Returns a list of file paths that match the given includeGlobs, excluding ones that match one or more given excludeGlobs
-function listFiles(includeGlobs, excludeGlobs) {
+function listFiles(includeGlobs, excludeGlobs, allowSymlinks) {
     return _(includeGlobs).map(function(includeGlob) {
         return glob.sync(includeGlob);
-    }).flatten().unique().filter(function(filePath) {
+    }).flatten().filter(function(filePath) {
+        return allowSymlinks || fs.realpathSync(filePath) === filePath;
+    }).unique().filter(function(filePath) {
         return !_.some(excludeGlobs, function(excludeGlob) {
             return minimatch(filePath, excludeGlob);
         });
