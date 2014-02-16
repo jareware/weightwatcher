@@ -92,7 +92,11 @@ function listFiles(includeGlobs, excludeGlobs, allowSymlinks) {
     return _(includeGlobs).map(function(includeGlob) {
         return glob.sync(includeGlob);
     }).flatten().filter(function(filePath) {
-        return allowSymlinks || fs.realpathSync(filePath) === filePath;
+        try {
+            return allowSymlinks || fs.realpathSync(filePath) === filePath;
+        } catch (e) {
+            return false; // happens when fs.realpathSync() attempts to stat a broken symlink -> ignore
+        }
     }).unique().filter(function(filePath) {
         return !_.some(excludeGlobs, function(excludeGlob) {
             return minimatch(filePath, excludeGlob);

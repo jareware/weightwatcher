@@ -102,6 +102,7 @@ describe('sensors/sloc', function() {
                 PWD + 'bar.js',
                 PWD + 'baz.js',
                 PWD + 'foo.js',
+                PWD + 'symlinked-file-broken.js', // since we're allowing symlinks, broken symlinks get included as well; not exactly optimal... :/
                 PWD + 'symlinked-file-outside.js',
                 PWD + 'symlinked-file.js',
                 PWD + 'trap.js' // this is a directory, but that's OK
