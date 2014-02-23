@@ -16,11 +16,16 @@
 
     <div id="container" style="min-width: 300px; height: 500px; margin: 0 auto"></div>
 
+    <pre id="details"></pre>
+
     <script>
         (function() { "use strict";
 
-            $.getJSON('weightwatcher-data.json', function(data) {
-                renderChart(combineSeries(data));
+            var gitData;
+
+            $.getJSON('weightwatcher-data.json', function(rawData) {
+                gitData = getGitData(rawData);
+                renderChart(combineSeries(rawData));
             });
 
             return;
@@ -33,6 +38,15 @@
                     });
                 });
                 return series;
+            }
+
+            function getGitData(rawData) {
+                var gitData = {};
+                Object.keys(rawData).forEach(function(identity) {
+                    var entry = rawData[identity];
+                    gitData[new Date(identity).getTime()] = entry.git.hash;
+                });
+                return gitData;
             }
 
             function getSLOCSeries(rawData) {
@@ -60,7 +74,25 @@
                 });
             }
 
+            function showDetailsAt(timestamp) {
+                var selectedCommit = gitData[timestamp];
+                var prevTimestamp = Object.keys(gitData).map(function(ts) { return window.parseInt(ts, 10); }).filter(function(ts) { return ts < timestamp; }).sort().reverse()[0];
+                var prevCommit = gitData[prevTimestamp];
+                var commitRange = prevCommit + '..' + selectedCommit;
+                var logFormatOpts = '--pretty=format:"%h (%ad) %an: %s" --date=iso';
+                $('#details').text(
+                    '$ git diff --stat ' + commitRange + '\n' +
+                    '$ git log ' + logFormatOpts + ' --ancestry-path ' + commitRange + '\n' +
+                    '$ git log ' + logFormatOpts + ' --merges ' + commitRange + '\n' +
+                    '$ git log ' + logFormatOpts + ' --no-merges ' + commitRange + '\n' +
+                    '$ gitk ' + commitRange + '\n' +
+                    ''
+                );
+            }
+
             function renderChart(series) {
+
+                var focusedX;
 
                 $('#container').highcharts({
                     chart: {
@@ -90,7 +122,14 @@
                         }
                     },
                     tooltip: {
-                        shared: true
+                        shared: false,
+                        formatter: function() {
+                            focusedX = this.x; // make note of the position in case the user wants details
+                            var date = new Date(this.x).toISOString().replace('T', ' ').replace(/\..*$/, '');
+                            var data = this.series.name + ': ' + this.y;
+                            var more = 'Click for details...';
+                            return [ date, data, more ].join('<br>');
+                        }
                     },
                     legend: {
                         layout: 'vertical',
@@ -99,6 +138,13 @@
                         borderWidth: 0
                     },
                     plotOptions: {
+                        series: {
+                            events: {
+                                click: function() {
+                                    showDetailsAt(focusedX);
+                                }
+                            }
+                        },
                         line: {
                             lineWidth: 1,
                             marker: {
