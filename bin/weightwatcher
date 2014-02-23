@@ -31,7 +31,7 @@ if (program.listSensors) {
 
 } else if (program.writeEntry) {
 
-    main.writeLogEntry().then(output).done();
+    main.writeLogEntry().done();
 
 } else {
 
