@@ -96,7 +96,7 @@
 
                 $('#container').highcharts({
                     chart: {
-                        zoomType: 'x',
+                        zoomType: 'xy',
                         spacingRight: 20
                     },
                     title: {
@@ -109,7 +109,7 @@
                     },
                     xAxis: {
                         type: 'datetime',
-                        maxZoom: 1 * 24 * 3600000, // 1 day
+                        maxZoom: undefined, // 5 * 24 * 3600000, // 5 days
                         title: {
                             text: null
                         }
