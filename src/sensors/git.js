@@ -3,6 +3,7 @@ var Q = require('q');
 var exec = require('../utils/process').exec;
 
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
+var HASH_LEN = 8;
 
 // Allows this sensor to provide identity for a log entry
 exports.getCurrentIdentity = function(sensorConfig) {
@@ -25,7 +26,7 @@ function getCurrentCommit(sensorConfig) {
             return Q.reject('Unparseable git output: ' + output);
         } else {
             return {
-                hash: output[0],
+                hash: output[0].substr(0, HASH_LEN),
                 date: output[1],
                 author: output[2],
                 message: output.slice(3).join('\n').trim()
