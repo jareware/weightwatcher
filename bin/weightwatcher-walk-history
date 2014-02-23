@@ -1,0 +1,23 @@
+#!/bin/bash
+
+git_co_exit=0
+git_head_date=""
+git_prev_date="n/a"
+
+while [ $git_co_exit -eq 0 ]; do
+
+    git_head_date=`git log -1 --pretty=format:"%ai" | cut -c -10`
+
+    if [ "$git_head_date" == "$git_prev_date" ]; then
+        echo "weightwatcher: $git_head_date => skip"
+    else
+        echo "weightwatcher: $git_head_date => RECORD"
+        git clean --force -d -e "weightwatcher-*" # remove lingering untracked files (except our own)
+        weightwatcher -w
+    fi
+
+    git_prev_date="$git_head_date"
+    git checkout --force HEAD^1 # checkout the
+    git_co_exit=$?
+
+done
