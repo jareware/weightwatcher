@@ -8,7 +8,7 @@ var main = require(__dirname + '/../src/main');
 program
     .version('0.0.0')
     .option('-l, --list-sensors', 'print out the currently available sensors')
-    .option('-i, --read-identity', 'print out the identity that would be used')
+    .option('-t, --read-timestamp', 'print out the timestamp that would be used')
     .option('-s, --read-sensor [name]', 'print out the current reading of named sensor')
     .option('-w, --write-entry', 'store the current readings of all sensors to a log entry')
     .parse(process.argv);
@@ -21,9 +21,9 @@ if (program.listSensors) {
 
     main.getAvailableSensors().then(_).invoke('pluck', 'sensorName').invoke('each', output).done();
 
-} else if (program.readIdentity) {
+} else if (program.readTimestamp) {
 
-    main.getCurrentIdentity().then(output).done();
+    main.getCurrentTimestamp().then(output).done();
 
 } else if (typeof program.readSensor === 'string') {
 

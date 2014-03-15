@@ -90,15 +90,15 @@ describe('main', function() {
             });
             main.getAvailableSensors = _.constant(Q([{
                 sensorName: 'fakeSensor',
-                getCurrentIdentity: function() {
-                    return 'id#1';
+                getCurrentTimestamp: function() {
+                    return '12:34:56';
                 },
                 getCurrentReading: function() {
                     return { count: 123 };
                 }
             }]));
             main.writeLogEntry().then(function(returnValue) {
-                assert.deepEqual(entries, [[ 'id#1', { fakeSensor: { count: 123 }}]]);
+                assert.deepEqual(entries, [[ '12:34:56', { fakeSensor: { count: 123 }}]]);
                 assert.deepEqual(returnValue, { fakeSensor: { count: 123 }});
             }).done(done);
 

@@ -5,8 +5,8 @@ var exec = require('../utils/process').exec;
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
 var HASH_LEN = 8;
 
-// Allows this sensor to provide identity for a log entry
-exports.getCurrentIdentity = function(sensorConfig) {
+// Allows this sensor to provide a timestamp for a log entry
+exports.getCurrentTimestamp = function(sensorConfig) {
     return getCurrentCommit(sensorConfig).get('date');
 };
 

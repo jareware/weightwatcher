@@ -18,19 +18,19 @@ exports.getAvailableSensors = function() {
     });
 };
 
-// Promises the currently applicable identity for a new log entry being written
-exports.getCurrentIdentity = function() {
+// Promises the current timestamp for a new log entry being written
+exports.getCurrentTimestamp = function() {
     return Q.all([
         exports.getAvailableSensors(),
         exports.getCurrentConfiguration()
     ]).spread(function(sensorModules, config) {
-        var idProvider = _(sensorModules).filter(function(sensorModule) {
-            return !!sensorModule.getCurrentIdentity;
+        var tsProvider = _(sensorModules).filter(function(sensorModule) {
+            return !!sensorModule.getCurrentTimestamp;
         }).first();
-        if (idProvider) {
-            return idProvider.getCurrentIdentity(config[idProvider.sensorName]);
+        if (tsProvider) {
+            return tsProvider.getCurrentTimestamp(config[tsProvider.sensorName]);
         } else {
-            return Q.reject('No identity-providing sensors available (that\'s odd)');
+            return Q.reject('No timestamp-providing sensors available (that\'s odd)');
         }
     });
 };
@@ -78,15 +78,15 @@ exports.writeLogEntry = function() {
     return Q.all([
         exports.getAvailableSensors(),
         exports.getCurrentConfiguration(),
-        exports.getCurrentIdentity(),
+        exports.getCurrentTimestamp(),
         exports.getPersistenceLayer()
-    ]).spread(function(sensorModules, sensorConfig, currentIdentity, persistenceLayer) {
+    ]).spread(function(sensorModules, sensorConfig, currentTimestamp, persistenceLayer) {
         var names = _.pluck(sensorModules, 'sensorName');
         var readings = _.map(names, exports.getCurrentReading);
         return Q.all([ names, Q.all(readings) ]).spread(function(names, data) {
             return _(names).zip(data).object().value();
         }).then(function(payload) {
-            return Q(persistenceLayer.writeLogEntry(currentIdentity, payload)).then(function() {
+            return Q(persistenceLayer.writeLogEntry(currentTimestamp, payload)).then(function() {
                 return payload;
             });
         });
