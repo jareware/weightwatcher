@@ -12,6 +12,7 @@ program
     .option('-t, --read-timestamp', 'print out the timestamp that would be used')
     .option('-s, --read-sensor [name]', 'print out the current reading of named sensor')
     .option('-w, --write-entry', 'store the current readings of all sensors to a log entry')
+    .option('-o, --output-viewer [path]', 'output the HTML-viewer into given path')
     .parse(process.argv);
 
 function output(input) {
@@ -33,6 +34,10 @@ if (program.listSensors) {
 } else if (program.writeEntry) {
 
     main.writeLogEntry().done();
+
+} else if (typeof program.outputViewer === 'string') {
+
+    main.outputViewerHTML(program.outputViewer).then(output).done();
 
 } else {
 

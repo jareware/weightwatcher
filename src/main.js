@@ -4,7 +4,9 @@ var FS = require('q-io/fs');
 var path = require('path');
 
 var SENSOR_PATH = __dirname + '/sensors';
+var VIEWER_PATH = __dirname + '/viewer';
 var DEFAULT_GLOBAL_EXCLUDES = '**/.*';
+var DATA_FILE = 'weightwatcher-data.json';
 
 // Promises an array of modules, with the "sensorName" property attached
 exports.getAvailableSensors = function() {
@@ -89,5 +91,20 @@ exports.writeLogEntry = function() {
                 return payload;
             });
         });
+    });
+};
+
+// Promises to output the HTML viewer application to the given path
+exports.outputViewerHTML = function(outputPath) {
+    return FS.makeTree(outputPath).then(function() {
+        return FS.list(VIEWER_PATH).then(function(files) {
+            return Q.all(files.map(function(file) {
+                return FS.copy(path.join(VIEWER_PATH, file), path.join(outputPath, file));
+            }));
+        });
+    }).then(function() {
+        return FS.copy(DATA_FILE, path.join(outputPath, DATA_FILE));
+    }).then(function() {
+        return path.join(path.resolve(outputPath), 'index.html');
     });
 };

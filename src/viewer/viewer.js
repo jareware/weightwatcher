@@ -32,6 +32,9 @@
         var seriesMap = {};
         Object.keys(rawData).forEach(function(identity) {
             var entry = rawData[identity];
+            if (!entry.sloc) {
+                return;
+            }
             Object.keys(entry.sloc).forEach(function(category) { // e.g. "Web code"
                 Object.keys(entry.sloc[category]).forEach(function(metric) { // e.g. "files"
                     var key = category + ': ' + metric;
