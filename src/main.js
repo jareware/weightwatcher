@@ -4,7 +4,6 @@ var FS = require('q-io/fs');
 var path = require('path');
 
 var SENSOR_PATH = __dirname + '/sensors';
-
 var DEFAULT_GLOBAL_EXCLUDES = '**/.*';
 
 // Promises an array of modules, with the "sensorName" property attached

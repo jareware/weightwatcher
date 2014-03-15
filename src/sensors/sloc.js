@@ -5,17 +5,19 @@ var path = require('path');
 var glob = require('glob');
 var minimatch = require('minimatch');
 
-// Public API of this module:
-exports.getCurrentReading = getCurrentReading;
+return module.exports = {
 
-// Expose specific internals for unit-testing only:
-exports.__test = {
-    extendSums: extendSums,
-    normalizeConfig: normalizeConfig,
-    listFiles: listFiles
+    // MODULE PUBLIC API:
+    getCurrentReading: getCurrentReading,
+
+    // Expose specific internals for unit-testing only:
+    __test: {
+        extendSums: extendSums,
+        normalizeConfig: normalizeConfig,
+        listFiles: listFiles
+    }
+
 };
-
-return; // end of module public API
 
 // Promises the current value(s) of this sensor
 function getCurrentReading(sensorConfig) {

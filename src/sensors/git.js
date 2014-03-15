@@ -5,17 +5,25 @@ var exec = require('../utils/process').exec;
 var GIT_LOG = 'git log -1 --pretty=format:"%H\n%ai\n%an\n%B"';
 var HASH_LEN = 8;
 
-// Allows this sensor to provide a timestamp for a log entry
-exports.getCurrentTimestamp = function(sensorConfig) {
-    return getCurrentCommit(sensorConfig).get('date');
+return module.exports = {
+
+    // MODULE PUBLIC API:
+    getCurrentTimestamp: getCurrentTimestamp,
+    getCurrentReading: getCurrentReading,
+
 };
 
+// Allows this sensor to provide a timestamp for a log entry
+function getCurrentTimestamp(sensorConfig) {
+    return getCurrentCommit(sensorConfig).get('date');
+}
+
 // Promises the current value(s) of this sensor
-exports.getCurrentReading = function(sensorConfig) {
+function getCurrentReading(sensorConfig) {
     return getCurrentCommit(sensorConfig).then(function(commit) {
         return _.pick(commit, 'hash');
     });
-};
+}
 
 // Promises the "git log" object for the HEAD commit
 function getCurrentCommit(sensorConfig) {
