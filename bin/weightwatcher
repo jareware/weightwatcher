@@ -4,9 +4,10 @@ var program = require('commander');
 var _ = require('lodash');
 var Q = require('q');
 var main = require(__dirname + '/../src/main');
+var pkg = require(__dirname + '/../package.json');
 
 program
-    .version('0.0.0')
+    .version(pkg.version)
     .option('-l, --list-sensors', 'print out the currently available sensors')
     .option('-t, --read-timestamp', 'print out the timestamp that would be used')
     .option('-s, --read-sensor [name]', 'print out the current reading of named sensor')
