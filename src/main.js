@@ -74,17 +74,15 @@ exports.getCurrentConfiguration = function() {
     });
 };
 
-// Promises to write the current readings of all applicable sensors to a log entry
-exports.writeLogEntry = function() {
+// Promises to write the current readings of all named sensors to a log entry
+exports.writeLogEntry = function(sensorNames) {
     return Q.all([
-        exports.getAvailableSensors(),
         exports.getCurrentConfiguration(),
         exports.getCurrentTimestamp(),
         exports.getPersistenceLayer()
-    ]).spread(function(sensorModules, sensorConfig, currentTimestamp, persistenceLayer) {
-        var names = _.pluck(sensorModules, 'sensorName');
-        var readings = _.map(names, exports.getCurrentReading);
-        return Q.all([ names, Q.all(readings) ]).spread(function(names, data) {
+    ]).spread(function(sensorConfig, currentTimestamp, persistenceLayer) {
+        var readings = _.map(sensorNames, exports.getCurrentReading);
+        return Q.all([ sensorNames, Q.all(readings) ]).spread(function(names, data) {
             return _(names).zip(data).object().value();
         }).then(function(payload) {
             return Q(persistenceLayer.writeLogEntry(currentTimestamp, payload)).then(function() {

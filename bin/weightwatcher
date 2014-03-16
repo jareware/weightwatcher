@@ -8,36 +8,68 @@ var pkg = require(__dirname + '/../package.json');
 
 program
     .version(pkg.version)
-    .option('-l, --list-sensors', 'print out the currently available sensors')
-    .option('-t, --read-timestamp', 'print out the timestamp that would be used')
-    .option('-s, --read-sensor [name]', 'print out the current reading of named sensor')
-    .option('-w, --write-entry', 'store the current readings of all sensors to a log entry')
-    .option('-o, --output-viewer [path]', 'output the HTML-viewer into given path')
+    .usage('[options] [command] [args...]')
+    .on('--help', help)
     .parse(process.argv);
+
+function help() {
+    console.log(
+        '  Where [command] is one of:\n\n' +
+        '    "sensors"              list currently available sensor modules\n' +
+        '    "show" [sensor...]     show the current value of all sensors, or just the named one(s)\n' +
+        '    "record" [sensor...]   same as above, but instead records the current value(s) into the data file\n' +
+        '    "viewer" [path]        outputs the viewer application to given path, or to `pwd` if omitted\n' +
+        ''
+    );
+    console.log(
+        '  Examples:\n\n' +
+        '    $ ' + program._name + ' show sloc\n\n' +
+        '        Displays the current source code statistics (as provided by the "sloc" sensor), and then exits without touching anything.\n' +
+        ''
+    );
+}
 
 function output(input) {
     console.log(input);
 }
 
-if (program.listSensors) {
+function getAllSensorNames() {
+    return main.getAvailableSensors().then(_).invoke('pluck', 'sensorName').invoke('value')
+}
 
-    main.getAvailableSensors().then(_).invoke('pluck', 'sensorName').invoke('each', output).done();
+var subcmd = program.args[0];
+var subargs = program.args.slice(1);
 
-} else if (program.readTimestamp) {
+if (subcmd === 'sensors') {
 
-    main.getCurrentTimestamp().then(output).done();
+    getAllSensorNames().invoke('forEach', output).done();
 
-} else if (typeof program.readSensor === 'string') {
+} else if (subcmd === 'show') {
 
-    main.getCurrentReading(program.readSensor).then(output).done();
+    Q.when().then(function() {
+        return subargs.length ? subargs : getAllSensorNames();
+    }).then(function(sensorNames) {
+        return Q.all(sensorNames.map(function(sensorName) {
+            return main.getCurrentReading(sensorName).then(function(currentReading) {
+                if (subargs.length !== 1) {
+                    output(sensorName);
+                }
+                output(currentReading);
+            });
+        }));
+    }).done();
 
-} else if (program.writeEntry) {
+} else if (subcmd === 'record') {
 
-    main.writeLogEntry().done();
+    Q.when().then(function() {
+        return subargs.length ? subargs : getAllSensorNames();
+    }).then(function(sensorNames) {
+        return main.writeLogEntry(sensorNames);
+    }).then(output).done();
 
-} else if (typeof program.outputViewer === 'string') {
+} else if (subcmd === 'viewer') {
 
-    main.outputViewerHTML(program.outputViewer).then(output).done();
+    main.outputViewerHTML(subargs[0] || '.').then(output).done();
 
 } else {
 
