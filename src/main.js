@@ -101,7 +101,11 @@ exports.outputViewerHTML = function(outputPath) {
             }));
         });
     }).then(function() {
-        return FS.copy(DATA_FILE, path.join(outputPath, DATA_FILE));
+        var src = DATA_FILE;
+        var dst = path.join(outputPath, DATA_FILE);
+        if (src !== dst) { // be careful not to overwrite the data file if we're outputting the viewer next to it
+            return FS.copy(src, dst);
+        }
     }).then(function() {
         return path.join(path.resolve(outputPath), 'index.html');
     });
