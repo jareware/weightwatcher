@@ -1,6 +1,6 @@
 {
   "name": "weightwatcher",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Super simple app for tracking & plotting software project source metrics",
   "homepage": "https://github.com/jareware/weightwatcher",
   "main": "bin/weightwatcher",
