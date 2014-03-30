@@ -2,12 +2,16 @@
 
     var gitData;
 
-    $.getJSON('weightwatcher-data.json', function(rawData) {
+//    $.getJSON('weightwatcher-data.json', init);
+
+    init(WEIGHTWATCHER_DATA);
+
+    return; // only function defs beyond this
+
+    function init(rawData) {
         gitData = getGitData(rawData);
         renderChart(combineSeries(rawData));
-    });
-
-    return;
+    }
 
     function combineSeries(rawData) {
         var series = getSLOCSeries(rawData);

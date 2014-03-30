@@ -99,19 +99,22 @@ exports.writeLogEntry = function(sensorNames, configFilePath) {
 
 // Promises to output the HTML viewer application to the given path
 exports.outputViewerHTML = function(outputPath) {
-    return FS.makeTree(outputPath).then(function() {
-        return FS.list(VIEWER_PATH).then(function(files) {
-            return Q.all(files.map(function(file) {
-                return FS.copy(path.join(VIEWER_PATH, file), path.join(outputPath, file));
-            }));
+    var outputFile = path.join(path.resolve(outputPath), 'weightwatcher.html');
+    return FS.makeTree(outputPath).then(function() { // create the destination directories if missing
+        return Q.all([ 'viewer.html', 'viewer.css', 'viewer.js' ].map(function(inputFile) {
+            return FS.read(path.join(VIEWER_PATH, inputFile));
+        }).concat(FS.read(DATA_FILE)));
+    }).spread(function(htmlContent, cssContent, jsContent, dataContent) {
+        var inlinedSources = {
+            'WEIGHTWATCHER_DATA = undefined':               'WEIGHTWATCHER_DATA = ' + dataContent,
+            '<link href="viewer.css" rel="stylesheet" />':  '<style>\n' + cssContent + '</style>',
+            '<script src="viewer.js"></script>':            '<script>\n' + jsContent + '</script>'
+        };
+        _.each(inlinedSources, function(replace, search) {
+            htmlContent = htmlContent.replace(search, replace);
         });
+        return FS.write(outputFile, htmlContent);
     }).then(function() {
-        var src = DATA_FILE;
-        var dst = path.join(outputPath, DATA_FILE);
-        if (src !== dst) { // be careful not to overwrite the data file if we're outputting the viewer next to it
-            return FS.copy(src, dst);
-        }
-    }).then(function() {
-        return path.join(path.resolve(outputPath), 'index.html');
+        return outputFile;
     });
 };

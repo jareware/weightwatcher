@@ -4,17 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, height=device-height" />
     <title>weightwatcher</title>
-
-    <link href="viewer.css" rel="stylesheet" type="text/css" />
-
+    <link href="viewer.css" rel="stylesheet" />
     <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script src="http://code.highcharts.com/highcharts.js"></script>
-    <script src="viewer.js"></script>
 </head>
 <body>
 
     <div id="chart"></div>
     <pre id="details"></pre>
+
+    <script>
+        var WEIGHTWATCHER_DATA = undefined;
+    </script>
+
+    <script src="viewer.js"></script>
 
 </body>
 </html>
