@@ -9,13 +9,13 @@
   "author": "Jarno Rantanen <jarno@jrw.fi>",
   "license": "MIT",
   "dependencies": {
-    "ws": "~0.4.31",
-    "glob": "~3.2.7",
-    "minimatch": "~0.2.12",
-    "q": "~0.9.7",
-    "q-io": "~1.10.6",
-    "mocha": "~1.14.0",
-    "commander": "~2.1.0",
-    "lodash": "~2.4.1"
+    "ws": "0.4.31",
+    "glob": "3.2.7",
+    "minimatch": "0.2.12",
+    "q": "0.9.7",
+    "q-io": "1.10.6",
+    "mocha": "1.14.0",
+    "commander": "2.1.0",
+    "lodash": "2.4.1"
   }
 }
