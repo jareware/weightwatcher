@@ -4,3 +4,5 @@
 # Ignore at root:
 /.idea
 /node_modules
+/weightwatcher-data*.json
+/.weightwatcher-config.js

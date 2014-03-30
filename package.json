@@ -2,7 +2,8 @@
   "name": "weightwatcher",
   "version": "0.1.0",
   "description": "Super simple app for tracking & plotting software project source metrics",
-  "main": "weightwatcher.js",
+  "homepage": "https://github.com/jareware/weightwatcher",
+  "main": "bin/weightwatcher",
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha --reporter spec test/unit"
   },
