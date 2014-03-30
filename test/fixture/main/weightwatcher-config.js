@@ -1,6 +1,6 @@
 module.exports = {
     foobar: 'bazbar',
-    sloc: {
+    source: {
         pwd: 'this should be overwritten',
         exclude: 'this too',
         what: 'ever'

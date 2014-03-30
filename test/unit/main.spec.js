@@ -6,7 +6,7 @@ var main = require('../../src/main');
 
 var PWD = path.resolve(__dirname + '/../fixture/main');
 var SAMPLE_MODULES = [
-    { sensorName: 'sloc' },
+    { sensorName: 'source' },
     { sensorName: 'madeUpSensor' }
 ];
 
@@ -39,7 +39,7 @@ describe('main', function() {
                     // This is a top-level config:
                     foobar: 'bazbar',
                     // This sensor has some custom config:
-                    sloc: {
+                    source: {
                         // These are automatically given to all sensor configs:
                         pwd: PWD,
                         exclude: '**/.*',

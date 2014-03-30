@@ -36,17 +36,17 @@
         var seriesMap = {};
         Object.keys(rawData).forEach(function(identity) {
             var entry = rawData[identity];
-            if (!entry.sloc) {
+            if (!entry.source) {
                 return;
             }
-            Object.keys(entry.sloc).forEach(function(category) { // e.g. "Web code"
-                Object.keys(entry.sloc[category]).forEach(function(metric) { // e.g. "files"
+            Object.keys(entry.source).forEach(function(category) { // e.g. "Web code"
+                Object.keys(entry.source[category]).forEach(function(metric) { // e.g. "files"
                     var key = category + ': ' + metric;
                     if (!seriesMap[key]) {
                         seriesMap[key] = [];
                     }
                     seriesMap[key].push(
-                        [ new Date(identity).getTime(), entry.sloc[category][metric] ]
+                        [ new Date(identity).getTime(), entry.source[category][metric] ]
                     );
                 });
             });

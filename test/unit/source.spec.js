@@ -1,8 +1,8 @@
 var path = require('path');
 var assert = require('assert'); // http://nodejs.org/api/assert.html
-var sloc = require('../../src/sensors/sloc');
+var source = require('../../src/sensors/source');
 
-var PWD = path.resolve(__dirname + '/../fixture/sloc') + '/';
+var PWD = path.resolve(__dirname + '/../fixture/source') + '/';
 
 function assertDeepEqual(actual, expected) {
     try {
@@ -13,31 +13,31 @@ function assertDeepEqual(actual, expected) {
     }
 }
 
-describe('sensors/sloc', function() {
+describe('sensors/source', function() {
 
     describe('extendSums', function() {
 
         it('does basic merge', function() {
             var original = { foo: 1 };
-            sloc.__test.extendSums(original, { foo: 100 });
+            source.__test.extendSums(original, { foo: 100 });
             assertDeepEqual(original, { foo: 101 })
         });
 
         it('creates new properties as necessary', function() {
             var original = { foo: 1 };
-            sloc.__test.extendSums(original, { bar: 100 });
+            source.__test.extendSums(original, { bar: 100 });
             assertDeepEqual(original, { foo: 1, bar: 100 })
         });
 
         it('ignores non-numeric properties in source', function() {
             var original = { foo: 1 };
-            sloc.__test.extendSums(original, { foo: 'abc', bar: {} });
+            source.__test.extendSums(original, { foo: 'abc', bar: {} });
             assertDeepEqual(original, { foo: 1 })
         });
 
         it('ignores non-numeric properties in target', function() {
             var original = { foo: 'foo' };
-            sloc.__test.extendSums(original, { foo: 123 });
+            source.__test.extendSums(original, { foo: 123 });
             assertDeepEqual(original, { foo: 'foo' })
         });
 
@@ -55,7 +55,7 @@ describe('sensors/sloc', function() {
                     'Some random grep': /grep/
                 }
             };
-            var actual = sloc.__test.normalizeConfig(input);
+            var actual = source.__test.normalizeConfig(input);
             var expected = {
                 pwd: '/dev/null',
                 exclude: [ '/dev/null/node_modules/**/*' ],
@@ -76,7 +76,7 @@ describe('sensors/sloc', function() {
                     include: '*.html'
                 }
             };
-            var actual = sloc.__test.normalizeConfig(input);
+            var actual = source.__test.normalizeConfig(input);
             var expected = {
                 pwd: '/',
                 exclude: [],
@@ -97,7 +97,7 @@ describe('sensors/sloc', function() {
     describe('listFiles', function() {
 
         it('expands given globs, allowing symlinks', function() {
-            var actual = sloc.__test.listFiles([ PWD + '*.js' ], [], true);
+            var actual = source.__test.listFiles([ PWD + '*.js' ], [], true);
             var expected = [
                 PWD + 'bar.js',
                 PWD + 'baz.js',
@@ -111,7 +111,7 @@ describe('sensors/sloc', function() {
         });
 
         it('expands given globs, disallowing symlinks', function() {
-            var actual = sloc.__test.listFiles([ PWD + '**/*.js' ], []);
+            var actual = source.__test.listFiles([ PWD + '**/*.js' ], []);
             var expected = [
                 PWD + 'bar.js',
                 PWD + 'baz.js',
@@ -124,7 +124,7 @@ describe('sensors/sloc', function() {
         });
 
         it('deduplicates matches', function() {
-            var actual = sloc.__test.listFiles([ PWD + 'b*.js', PWD + 'bar.js' ], []);
+            var actual = source.__test.listFiles([ PWD + 'b*.js', PWD + 'bar.js' ], []);
             var expected = [
                 PWD + 'bar.js',
                 PWD + 'baz.js'
@@ -133,7 +133,7 @@ describe('sensors/sloc', function() {
         });
 
         it('respects given ignore globs', function() {
-            var actual = sloc.__test.listFiles([ PWD + '*.js' ], [ PWD + 'b*.js' ]);
+            var actual = source.__test.listFiles([ PWD + '*.js' ], [ PWD + 'b*.js' ]);
             var expected = [
                 PWD + 'foo.js',
                 PWD + 'trap.js' // this is a directory, but that's OK
@@ -146,7 +146,7 @@ describe('sensors/sloc', function() {
     describe('getCurrentReading', function() {
 
         it('counts lines and greps correctly', function(done) {
-            sloc.getCurrentReading({
+            source.getCurrentReading({
                 pwd: PWD,
                 exclude: '**/.*',
                 'Web code': {
