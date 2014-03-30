@@ -27,9 +27,15 @@
         var gitData = {};
         Object.keys(rawData).forEach(function(identity) {
             var entry = rawData[identity];
-            gitData[new Date(identity).getTime()] = entry.git.hash;
+            gitData[parseDate(identity).getTime()] = entry.git.hash;
         });
         return gitData;
+    }
+
+    // @see http://stackoverflow.com/questions/2587345/javascript-date-parse
+    // @example "2013-01-07 17:34:24 +0200" => Date object
+    function parseDate(dateTimeString) {
+        return new Date(dateTimeString.replace(' ', 'T').replace(' ', ''));
     }
 
     function getSLOCSeries(rawData) {
@@ -46,7 +52,7 @@
                         seriesMap[key] = [];
                     }
                     seriesMap[key].push(
-                        [ new Date(identity).getTime(), entry.source[category][metric] ]
+                        [ parseDate(identity).getTime(), entry.source[category][metric] ]
                     );
                 });
             });
