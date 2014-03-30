@@ -1,9 +1,11 @@
+// This script connects to Chrome using the remote debugging protocol, to extract some useful metrics from a page load
+// @see https://developers.google.com/chrome-developer-tools/docs/debugger-protocol
+
 var fs = require('fs');
 var http = require('http');
 var WebSocket = require('ws');
 
-//var URL_TO_PROFILE = 'http://localhost:8000/';
-var URL_TO_PROFILE = 'http://www.futurice.com/';
+var URL_TO_PROFILE = 'http://localhost:8000/';
 var TARGET_DEBUGGEE = 'http://localhost:9222/';
 
 http.get(TARGET_DEBUGGEE + 'json', function(res) {

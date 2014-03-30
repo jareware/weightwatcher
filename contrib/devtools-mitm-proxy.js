@@ -1,3 +1,5 @@
+// This script implements a man-in-the-middle WebSocket proxy for use with the Chrome DevTools
+
 var fs = require('fs');
 var WebSocket = require('ws');
 var WebSocketServer = require('ws').Server;

@@ -1,4 +1,6 @@
+# Ignore globally:
 .DS_Store
 
+# Ignore at root:
 /.idea
 /node_modules
