@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Utility script for seeding a weightwatcher data file from existing git history.
+# e.g. $ weightwatcher-walk-history -c /path/to/weightwatcher-config.js
+# The above will repeatedly check out an older version of the current branch, up to the initial commit.
+# BEWARE: The script HAS the potential to lose data (untracked files, specifically), so ALWAYS run in a fresh clone.
+
 git_co_exit=0
 git_head_date=""
 git_prev_date="n/a"
@@ -12,8 +17,8 @@ while [ $git_co_exit -eq 0 ]; do
         echo "weightwatcher: $git_head_date => skip"
     else
         echo "weightwatcher: $git_head_date => RECORD"
-        git clean --force -d -e "weightwatcher-*" # remove lingering untracked files (except our own)
-        weightwatcher -w
+        git clean --force -d -e "{,.}weightwatcher-*" # remove lingering untracked files (except our own)
+        weightwatcher $@ record
     fi
 
     git_prev_date="$git_head_date"
