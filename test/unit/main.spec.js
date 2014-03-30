@@ -10,8 +10,13 @@ var SAMPLE_MODULES = [
     { sensorName: 'madeUpSensor' }
 ];
 
-function diff(actual, expected) {
-    console.log('\n--- actual ---\n', actual, '\n--- expected ---\n', expected);
+function assertDeepEqual(actual, expected) {
+    try {
+        assert.deepEqual(actual, expected);
+    } catch (e) {
+        console.log('\nactual:\n', actual, '\nexpected:\n', expected);
+        throw e;
+    }
 }
 
 describe('main', function() {
@@ -53,8 +58,7 @@ describe('main', function() {
                         exclude: '**/.*'
                     }
                 };
-                // diff(actual, expected);
-                assert.deepEqual(actual, expected);
+                assertDeepEqual(actual, expected);
             }).done(done);
         });
 
@@ -65,8 +69,8 @@ describe('main', function() {
         it('persists the expected data', function(done) {
             var entries = [];
             main.getPersistenceLayer = _.constant({
-                writeLogEntry: function(entryUID, entryData) {
-                    entries.push(Array.prototype.slice.call(arguments));
+                writeLogEntry: function(config, entryUID, entryData) {
+                    entries.push([ entryUID, entryData ]);
                 }
             });
             main.getAvailableSensors = _.constant(Q([{
@@ -78,9 +82,9 @@ describe('main', function() {
                     return { count: 123 };
                 }
             }]));
-            main.writeLogEntry([ 'fakeSensor' ], 'weightwatcher-config.js').then(function(returnValue) {
-                assert.deepEqual(entries, [[ '12:34:56', { fakeSensor: { count: 123 }}]]);
-                assert.deepEqual(returnValue, { fakeSensor: { count: 123 }});
+            main.writeLogEntry([ 'fakeSensor' ], '.weightwatcher-config.js').then(function(returnValue) {
+                assertDeepEqual(entries, [[ '12:34:56', { fakeSensor: { count: 123 }}]]);
+                assertDeepEqual(returnValue, { fakeSensor: { count: 123 }});
             }).done(done);
 
         });

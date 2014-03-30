@@ -6,7 +6,6 @@ var path = require('path');
 var SENSOR_PATH = __dirname + '/sensors';
 var VIEWER_PATH = __dirname + '/viewer';
 var DEFAULT_GLOBAL_EXCLUDES = '**/.*';
-var DATA_FILE = 'weightwatcher-data.json';
 
 // Promises an array of modules, with the "sensorName" property attached
 exports.getAvailableSensors = function() {
@@ -83,14 +82,14 @@ exports.writeLogEntry = function(sensorNames, configFilePath) {
         exports.getCurrentConfiguration(configFilePath),
         exports.getCurrentTimestamp(configFilePath),
         exports.getPersistenceLayer()
-    ]).spread(function(sensorConfig, currentTimestamp, persistenceLayer) {
+    ]).spread(function(config, currentTimestamp, persistenceLayer) {
         var readings = _.map(sensorNames, function(sensorName) {
             return exports.getCurrentReading(sensorName, configFilePath);
         });
         return Q.all([ sensorNames, Q.all(readings) ]).spread(function(names, data) {
             return _(names).zip(data).object().value();
         }).then(function(payload) {
-            return Q(persistenceLayer.writeLogEntry(currentTimestamp, payload)).then(function() {
+            return Q(persistenceLayer.writeLogEntry(config, currentTimestamp, payload)).then(function() {
                 return payload;
             });
         });
@@ -98,12 +97,16 @@ exports.writeLogEntry = function(sensorNames, configFilePath) {
 };
 
 // Promises to output the HTML viewer application to the given path
-exports.outputViewerHTML = function(outputPath) {
+exports.outputViewerHTML = function(outputPath, configFilePath) {
     var outputFile = path.join(path.resolve(outputPath), 'weightwatcher.html');
-    return FS.makeTree(outputPath).then(function() { // create the destination directories if missing
+    return Q().then(function() {
+        return FS.makeTree(outputPath); // create the destination directories if missing
+    }).then(function() {
+        return exports.getCurrentConfiguration(configFilePath);
+    }).then(function(config) {
         return Q.all([ 'viewer.html', 'viewer.css', 'viewer.js' ].map(function(inputFile) {
             return FS.read(path.join(VIEWER_PATH, inputFile));
-        }).concat(FS.read(DATA_FILE)));
+        }).concat(FS.read(config.dataFile)));
     }).spread(function(htmlContent, cssContent, jsContent, dataContent) {
         var inlinedSources = {
             'WEIGHTWATCHER_DATA = undefined':               'WEIGHTWATCHER_DATA = ' + dataContent,

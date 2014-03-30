@@ -2,7 +2,7 @@
 
     var gitData;
 
-//    $.getJSON('weightwatcher-data.json', init);
+//    $.getJSON('.weightwatcher-data.json', init);
 
     init(WEIGHTWATCHER_DATA);
 
