@@ -6,19 +6,22 @@ var Q = require('q');
 var main = require(__dirname + '/../src/main');
 var pkg = require(__dirname + '/../package.json');
 
+var DEFAULT_CONFIG_FILE = '.weightwatcher-config.js';
+
 program
     .version(pkg.version)
     .usage('[options] [command] [args...]')
+    .option('-c, --config-file <filename>', 'read configuration from given file, instead of default "' + DEFAULT_CONFIG_FILE + '"')
     .on('--help', help)
     .parse(process.argv);
 
 function help() {
     console.log(
         '  Where [command] is one of:\n\n' +
-        '    "sensors"              list currently available sensor modules\n' +
-        '    "show" [sensor...]     show the current value of all sensors, or just the named one(s)\n' +
-        '    "record" [sensor...]   same as above, but instead records the current value(s) into the data file\n' +
-        '    "viewer" [path]        outputs the viewer application to given path, or to `pwd` if omitted\n' +
+        '    sensors              list currently available sensor modules\n' +
+        '    show [sensor...]     show the current value of all sensors, or just the named one(s)\n' +
+        '    record [sensor...]   same as above, but instead records the current value(s) into the data file\n' +
+        '    viewer [path]        outputs the viewer application to given path, or to `pwd` if omitted\n' +
         ''
     );
     console.log(
@@ -39,6 +42,7 @@ function getAllSensorNames() {
 
 var subcmd = program.args[0];
 var subargs = program.args.slice(1);
+var configFilePath = program.configFile || DEFAULT_CONFIG_FILE;
 
 if (subcmd === 'sensors') {
 
@@ -50,7 +54,7 @@ if (subcmd === 'sensors') {
         return subargs.length ? subargs : getAllSensorNames();
     }).then(function(sensorNames) {
         return Q.all(sensorNames.map(function(sensorName) {
-            return main.getCurrentReading(sensorName).then(function(currentReading) {
+            return main.getCurrentReading(sensorName, configFilePath).then(function(currentReading) {
                 if (subargs.length !== 1) {
                     output(sensorName);
                 }
@@ -64,7 +68,7 @@ if (subcmd === 'sensors') {
     Q.when().then(function() {
         return subargs.length ? subargs : getAllSensorNames();
     }).then(function(sensorNames) {
-        return main.writeLogEntry(sensorNames);
+        return main.writeLogEntry(sensorNames, configFilePath);
     }).then(output).done();
 
 } else if (subcmd === 'viewer') {

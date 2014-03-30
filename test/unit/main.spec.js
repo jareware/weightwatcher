@@ -34,7 +34,7 @@ describe('main', function() {
 
         it('loads config and augments with implicit keys', function(done) {
             main.getAvailableSensors = _.constant(Q(SAMPLE_MODULES));
-            main.getCurrentConfiguration().then(function(actual) {
+            main.getCurrentConfiguration('weightwatcher-config.js').then(function(actual) {
                 var expected = {
                     // This is a top-level config:
                     foobar: 'bazbar',
@@ -50,25 +50,6 @@ describe('main', function() {
                     madeUpSensor: {
                         // These are automatically given to all sensor configs:
                         pwd: PWD,
-                        exclude: '**/.*'
-                    }
-                };
-                // diff(actual, expected);
-                assert.deepEqual(actual, expected);
-            }).done(done);
-        });
-
-        it('defaults to empty config if file not found', function(done) {
-            process.chdir('..');
-            main.getAvailableSensors = _.constant(Q(SAMPLE_MODULES));
-            main.getCurrentConfiguration().then(function(actual) {
-                var expected = {
-                    sloc: {
-                        pwd: path.resolve(PWD + '/..'),
-                        exclude: '**/.*'
-                    },
-                    madeUpSensor: {
-                        pwd: path.resolve(PWD + '/..'),
                         exclude: '**/.*'
                     }
                 };
@@ -97,7 +78,7 @@ describe('main', function() {
                     return { count: 123 };
                 }
             }]));
-            main.writeLogEntry().then(function(returnValue) {
+            main.writeLogEntry([ 'fakeSensor' ], 'weightwatcher-config.js').then(function(returnValue) {
                 assert.deepEqual(entries, [[ '12:34:56', { fakeSensor: { count: 123 }}]]);
                 assert.deepEqual(returnValue, { fakeSensor: { count: 123 }});
             }).done(done);

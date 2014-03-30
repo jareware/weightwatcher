@@ -20,10 +20,10 @@ exports.getAvailableSensors = function() {
 };
 
 // Promises the current timestamp for a new log entry being written
-exports.getCurrentTimestamp = function() {
+exports.getCurrentTimestamp = function(configFilePath) {
     return Q.all([
         exports.getAvailableSensors(),
-        exports.getCurrentConfiguration()
+        exports.getCurrentConfiguration(configFilePath)
     ]).spread(function(sensorModules, config) {
         var tsProvider = _(sensorModules).filter(function(sensorModule) {
             return !!sensorModule.getCurrentTimestamp;
@@ -37,10 +37,10 @@ exports.getCurrentTimestamp = function() {
 };
 
 // Promises the current reading of the named sensor
-exports.getCurrentReading = function(sensorName) {
+exports.getCurrentReading = function(sensorName, configFilePath) {
     return Q.all([
         exports.getAvailableSensors(),
-        exports.getCurrentConfiguration()
+        exports.getCurrentConfiguration(configFilePath)
     ]).spread(function(sensorModules, config) {
         var readingProvider = _(sensorModules).where({ sensorName: sensorName }).pluck('getCurrentReading').first();
         return readingProvider ? readingProvider(config[sensorName]) : Q.reject('No such sensor "' + sensorName + '"');
@@ -53,13 +53,16 @@ exports.getPersistenceLayer = function() {
 };
 
 // Promises the resolved global configuration object, with sensor config under keys named after them
-exports.getCurrentConfiguration = function() {
+exports.getCurrentConfiguration = function(configFilePath) {
+    if (!configFilePath) {
+        return Q.reject('No config file path specified for reading configuration');
+    }
     return Q.all([
         exports.getAvailableSensors()
     ]).spread(function(sensorModules) {
-        var configFile = path.resolve('./weightwatcher-config.js');
+        var configFile = path.resolve(configFilePath);
         return FS.isFile(configFile).then(function(isFile) {
-            return isFile ? require(configFile) : {};
+            return isFile ? require(configFile) : Q.reject('Configuration file "' + configFilePath + '" unreadable');
         }).then(function(config) {
             _(sensorModules).pluck('sensorName').each(function(sensorName) {
                 config[sensorName] = config[sensorName] || {};
@@ -75,13 +78,15 @@ exports.getCurrentConfiguration = function() {
 };
 
 // Promises to write the current readings of all named sensors to a log entry
-exports.writeLogEntry = function(sensorNames) {
+exports.writeLogEntry = function(sensorNames, configFilePath) {
     return Q.all([
-        exports.getCurrentConfiguration(),
-        exports.getCurrentTimestamp(),
+        exports.getCurrentConfiguration(configFilePath),
+        exports.getCurrentTimestamp(configFilePath),
         exports.getPersistenceLayer()
     ]).spread(function(sensorConfig, currentTimestamp, persistenceLayer) {
-        var readings = _.map(sensorNames, exports.getCurrentReading);
+        var readings = _.map(sensorNames, function(sensorName) {
+            return exports.getCurrentReading(sensorName, configFilePath);
+        });
         return Q.all([ sensorNames, Q.all(readings) ]).spread(function(names, data) {
             return _(names).zip(data).object().value();
         }).then(function(payload) {
