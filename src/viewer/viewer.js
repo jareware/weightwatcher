@@ -1,6 +1,6 @@
 (function() { "use strict";
 
-    var timestampsToCommits;
+    var timestampsToGitRecords;
 
 //    $.getJSON('.weightwatcher-data.json', init);
 
@@ -9,7 +9,7 @@
     return; // only function defs beyond this
 
     function init(rawData) {
-        timestampsToCommits = getTimestampMap(rawData);
+        timestampsToGitRecords = getTimestampMap(rawData);
         renderChart(combineSeries(rawData));
     }
 
@@ -26,12 +26,12 @@
     }
 
     function getTimestampMap(rawData) {
-        var timestampToCommitMap = {};
+        var map = {};
         Object.keys(rawData).forEach(function(timestamp) {
             var record = rawData[timestamp];
-            timestampToCommitMap[parseDate(timestamp).getTime()] = record.git.hash;
+            map[parseDate(timestamp).getTime()] = record.git;
         });
-        return timestampToCommitMap;
+        return map;
     }
 
     // @see http://stackoverflow.com/questions/2587345/javascript-date-parse
@@ -83,18 +83,20 @@
     }
 
     function showDetailsAt(timestamp) {
-        var selectedCommit = timestampsToCommits[timestamp];
-        var prevTimestamp = Object.keys(timestampsToCommits).map(function(ts) { return window.parseInt(ts, 10); }).filter(function(ts) { return ts < timestamp; }).sort().reverse()[0];
-        var prevCommit = timestampsToCommits[prevTimestamp];
-        var commitRange = prevCommit + '..' + selectedCommit;
+        var selectedGitRecord = timestampsToGitRecords[timestamp];
+        var prevTimestamp = Object.keys(timestampsToGitRecords).map(function(ts) { return window.parseInt(ts, 10); }).filter(function(ts) { return ts < timestamp; }).sort().reverse()[0];
+        var prevRecord = timestampsToGitRecords[prevTimestamp];
+        var commitRange = prevRecord.hash + '..' + selectedGitRecord.hash;
         var logFormatOpts = '--pretty=format:"%h (%ad) %an: %s" --date=iso';
         $('#details').text(
+            '### git commands ###\n\n' +
             '$ git diff --stat ' + commitRange + '\n' +
-                '$ git log ' + logFormatOpts + ' --ancestry-path ' + commitRange + '\n' +
-                '$ git log ' + logFormatOpts + ' --merges ' + commitRange + '\n' +
-                '$ git log ' + logFormatOpts + ' --no-merges ' + commitRange + '\n' +
-                '$ gitk ' + commitRange + '\n' +
-                ''
+            '$ git log ' + logFormatOpts + ' --ancestry-path ' + commitRange + '\n' +
+            '$ git log ' + logFormatOpts + ' --merges ' + commitRange + '\n' +
+            '$ git log ' + logFormatOpts + ' --no-merges ' + commitRange + '\n' +
+            '$ gitk ' + commitRange + '\n\n' +
+            '### contributors ###\n\n' +
+            selectedGitRecord.contributors.join('\n')
         );
     }
 
