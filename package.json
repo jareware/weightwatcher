@@ -13,7 +13,6 @@
   "author": "Jarno Rantanen <jarno@jrw.fi>",
   "license": "MIT",
   "dependencies": {
-    "ws": "0.4.31",
     "glob": "3.2.7",
     "minimatch": "0.2.12",
     "q": "0.9.7",
