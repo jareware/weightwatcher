@@ -17,7 +17,7 @@ while [ $git_co_exit -eq 0 ]; do
         echo "weightwatcher: $git_head_date => skip"
     else
         echo "weightwatcher: $git_head_date => RECORD"
-        git clean --force -d -e "{,.}weightwatcher-*" # remove lingering untracked files (except our own)
+        git clean -d -x --exclude="*weightwatcher*" --force # remove lingering untracked files (except our own)
         weightwatcher $@ record
     fi
 
