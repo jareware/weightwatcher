@@ -14,13 +14,15 @@
     }
 
     function combineSeries(rawData) {
-        var series = getSLOCSeries(rawData);
-        series.forEach(function(currentSeries) {
+        var gitSeries = getGitSeries(rawData);
+        var slocSeries = getSLOCSeries(rawData);
+        var combinedSeries = gitSeries.concat(slocSeries);
+        combinedSeries.forEach(function(currentSeries) {
             currentSeries.data.sort(function(a, b) {
                 return a[0] - b[0]; // sort by timestamps
             });
         });
-        return series;
+        return combinedSeries;
     }
 
     function getGitData(rawData) {
@@ -38,6 +40,22 @@
         return new Date(dateTimeString.replace(' ', 'T').replace(' ', ''));
     }
 
+    function getGitSeries(rawData) {
+        var data = [];
+        Object.keys(rawData).forEach(function(identity) {
+            var entry = rawData[identity];
+            if (!entry.git) {
+                return;
+            }
+            data.push([ parseDate(identity).getTime(), entry.git.contributors.length ]);
+        });
+        return [{
+            data: data,
+            name: 'Contributors',
+            type: 'line'
+        }];
+    }
+
     function getSLOCSeries(rawData) {
         var seriesMap = {};
         Object.keys(rawData).forEach(function(identity) {
@@ -51,9 +69,7 @@
                     if (!seriesMap[key]) {
                         seriesMap[key] = [];
                     }
-                    seriesMap[key].push(
-                        [ parseDate(identity).getTime(), entry.source[category][metric] ]
-                    );
+                    seriesMap[key].push([ parseDate(identity).getTime(), entry.source[category][metric] ]);
                 });
             });
         });
