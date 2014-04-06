@@ -1,6 +1,6 @@
 (function() { "use strict";
 
-    var gitData;
+    var timestampsToCommits;
 
 //    $.getJSON('.weightwatcher-data.json', init);
 
@@ -9,7 +9,7 @@
     return; // only function defs beyond this
 
     function init(rawData) {
-        gitData = getGitData(rawData);
+        timestampsToCommits = getTimestampMap(rawData);
         renderChart(combineSeries(rawData));
     }
 
@@ -25,13 +25,13 @@
         return combinedSeries;
     }
 
-    function getGitData(rawData) {
-        var gitData = {};
-        Object.keys(rawData).forEach(function(identity) {
-            var entry = rawData[identity];
-            gitData[parseDate(identity).getTime()] = entry.git.hash;
+    function getTimestampMap(rawData) {
+        var timestampToCommitMap = {};
+        Object.keys(rawData).forEach(function(timestamp) {
+            var record = rawData[timestamp];
+            timestampToCommitMap[parseDate(timestamp).getTime()] = record.git.hash;
         });
-        return gitData;
+        return timestampToCommitMap;
     }
 
     // @see http://stackoverflow.com/questions/2587345/javascript-date-parse
@@ -42,12 +42,12 @@
 
     function getGitSeries(rawData) {
         var data = [];
-        Object.keys(rawData).forEach(function(identity) {
-            var entry = rawData[identity];
-            if (!entry.git) {
+        Object.keys(rawData).forEach(function(timestamp) {
+            var record = rawData[timestamp];
+            if (!record.git) {
                 return;
             }
-            data.push([ parseDate(identity).getTime(), entry.git.contributors.length ]);
+            data.push([ parseDate(timestamp).getTime(), record.git.contributors.length ]);
         });
         return [{
             data: data,
@@ -58,18 +58,18 @@
 
     function getSLOCSeries(rawData) {
         var seriesMap = {};
-        Object.keys(rawData).forEach(function(identity) {
-            var entry = rawData[identity];
-            if (!entry.source) {
+        Object.keys(rawData).forEach(function(timestamp) {
+            var record = rawData[timestamp];
+            if (!record.source) {
                 return;
             }
-            Object.keys(entry.source).forEach(function(category) { // e.g. "Web code"
-                Object.keys(entry.source[category]).forEach(function(metric) { // e.g. "files"
+            Object.keys(record.source).forEach(function(category) { // e.g. "Web code"
+                Object.keys(record.source[category]).forEach(function(metric) { // e.g. "files"
                     var key = category + ': ' + metric;
                     if (!seriesMap[key]) {
                         seriesMap[key] = [];
                     }
-                    seriesMap[key].push([ parseDate(identity).getTime(), entry.source[category][metric] ]);
+                    seriesMap[key].push([ parseDate(timestamp).getTime(), record.source[category][metric] ]);
                 });
             });
         });
@@ -83,9 +83,9 @@
     }
 
     function showDetailsAt(timestamp) {
-        var selectedCommit = gitData[timestamp];
-        var prevTimestamp = Object.keys(gitData).map(function(ts) { return window.parseInt(ts, 10); }).filter(function(ts) { return ts < timestamp; }).sort().reverse()[0];
-        var prevCommit = gitData[prevTimestamp];
+        var selectedCommit = timestampsToCommits[timestamp];
+        var prevTimestamp = Object.keys(timestampsToCommits).map(function(ts) { return window.parseInt(ts, 10); }).filter(function(ts) { return ts < timestamp; }).sort().reverse()[0];
+        var prevCommit = timestampsToCommits[prevTimestamp];
         var commitRange = prevCommit + '..' + selectedCommit;
         var logFormatOpts = '--pretty=format:"%h (%ad) %an: %s" --date=iso';
         $('#details').text(
