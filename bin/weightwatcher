@@ -36,8 +36,10 @@ function output(input) {
     console.log(input);
 }
 
-function getAllSensorNames() {
-    return main.getAvailableSensors().then(_).invoke('pluck', 'sensorName').invoke('value')
+function getAllSensorNames(configFilePath) {
+    return main.getCurrentConfiguration(configFilePath).then(function(config) {
+        return _.keys(config.sensors);
+    });
 }
 
 var subcmd = program.args[0];
@@ -46,7 +48,7 @@ var configFilePath = program.configFile || DEFAULT_CONFIG_FILE;
 
 if (subcmd === 'sensors') {
 
-    getAllSensorNames().invoke('forEach', output).done();
+    getAllSensorNames(configFilePath).invoke('forEach', output).done();
 
 } else if (subcmd === 'show') {
 

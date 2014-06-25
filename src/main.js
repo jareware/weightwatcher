@@ -7,6 +7,18 @@ var SENSOR_PATH = __dirname + '/sensors';
 var VIEWER_PATH = __dirname + '/viewer';
 var DEFAULT_GLOBAL_EXCLUDES = '**/.*';
 
+return module.exports = {
+
+    // MODULE PUBLIC API:
+    getCurrentConfiguration: getCurrentConfiguration,
+
+    // Expose specific internals for unit-testing only:
+    __test: {
+        // TODO
+    }
+
+};
+
 // Promises an array of modules, with the "sensorName" property attached
 exports.getAvailableSensors = function() {
     return FS.list(SENSOR_PATH).then(function(fileNames) {
@@ -52,7 +64,7 @@ exports.getPersistenceLayer = function() {
 };
 
 // Promises the resolved global configuration object
-exports.getCurrentConfiguration = function(configFilePath) {
+function getCurrentConfiguration(configFilePath) {
     if (!configFilePath) {
         return Q.reject('No config file path specified for reading configuration');
     }
@@ -73,7 +85,7 @@ exports.getCurrentConfiguration = function(configFilePath) {
         }).object().value();
         return _.extend(defaultConfig, config, { sensors: extendedSensorConfig });
     });
-};
+}
 
 // Promises to write the current readings of all named sensors to a log entry
 exports.writeLogEntry = function(sensorNames, configFilePath) {
