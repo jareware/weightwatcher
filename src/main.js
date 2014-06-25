@@ -51,28 +51,27 @@ exports.getPersistenceLayer = function() {
     return Q(require('./persistence/json'));
 };
 
-// Promises the resolved global configuration object, with sensor config under keys named after them
+// Promises the resolved global configuration object
 exports.getCurrentConfiguration = function(configFilePath) {
     if (!configFilePath) {
         return Q.reject('No config file path specified for reading configuration');
     }
-    return Q.all([
-        exports.getAvailableSensors()
-    ]).spread(function(sensorModules) {
-        var configFile = path.resolve(configFilePath);
-        return FS.isFile(configFile).then(function(isFile) {
-            return isFile ? require(configFile) : Q.reject('Configuration file "' + configFilePath + '" unreadable');
-        }).then(function(config) {
-            _(sensorModules).pluck('sensorName').each(function(sensorName) {
-                config[sensorName] = config[sensorName] || {};
-                _.extend(config[sensorName], {
-                    // Augment each sensor's config with the implicit values:
-                    pwd: path.resolve('.'),
-                    exclude: DEFAULT_GLOBAL_EXCLUDES
-                });
-            });
-            return config;
-        });
+    var configFile = path.resolve(configFilePath);
+    return FS.isFile(configFile).then(function(isFile) {
+        return isFile ? require(configFile) : Q.reject('Configuration file "' + configFilePath + '" unreadable');
+    }).then(function(config) {
+        if (!_.isObject(config)) {
+            return Q.reject('No config object in file "' + configFilePath + '"');
+        }
+        var defaultConfig = { global: {}, sensors: {} };
+        var extendedSensorConfig = _(config.sensors).map(function(sensorConfig, sensorName) {
+            return [ sensorName, _.extend(sensorConfig, {
+                // Augment each sensor's config with the implicit values:
+                pwd: path.resolve('.'),
+                exclude: DEFAULT_GLOBAL_EXCLUDES
+            }) ];
+        }).object().value();
+        return _.extend(defaultConfig, config, { sensors: extendedSensorConfig });
     });
 };
 

@@ -5,10 +5,6 @@ var assert = require('assert'); // http://nodejs.org/api/assert.html
 var main = require('../../src/main');
 
 var PWD = path.resolve(__dirname + '/../fixture/main');
-var SAMPLE_MODULES = [
-    { sensorName: 'source' },
-    { sensorName: 'madeUpSensor' }
-];
 
 function assertDeepEqual(actual, expected) {
     try {
@@ -23,42 +19,37 @@ describe('main', function() {
 
     describe('getCurrentConfiguration', function() {
 
-        var backupModule;
         var backupPwd;
 
         beforeEach(function() {
-            backupModule = _.clone(main);
             backupPwd = process.cwd();
             process.chdir(PWD); // switch pwd
         });
 
         afterEach(function() {
-            _.extend(main, backupModule); // revert possible mocks
             process.chdir(backupPwd); // restore pwd
         });
 
         it('loads config and augments with implicit keys', function(done) {
-            main.getAvailableSensors = _.constant(Q(SAMPLE_MODULES));
-            main.getCurrentConfiguration('weightwatcher-config.js').then(function(actual) {
-                var expected = {
-                    // This is a top-level config:
-                    foobar: 'bazbar',
-                    // This sensor has some custom config:
-                    source: {
-                        // These are automatically given to all sensor configs:
-                        pwd: PWD,
-                        exclude: '**/.*',
-                        // These are custom config for the sensor:
-                        what: 'ever'
-                    },
-                    // This sensor doesn't have any config so it just gets the defaults:
-                    madeUpSensor: {
-                        // These are automatically given to all sensor configs:
-                        pwd: PWD,
-                        exclude: '**/.*'
-                    }
-                };
-                assertDeepEqual(actual, expected);
+            main.getCurrentConfiguration('test-config-1.js').then(function(actual) {
+                assertDeepEqual(actual.global, {
+                    // The global parts can be pretty much anything:
+                    foobar: 'bazbar'
+                });
+                assertDeepEqual(actual.sensors.source, {
+                    // These are automatically given to all sensor configs:
+                    pwd: PWD,
+                    exclude: '**/.*',
+                    // These are custom config for the sensor:
+                    what: 'ever'
+                });
+            }).done(done);
+        });
+
+        it('won\'t go bonkers with an empty config', function(done) {
+            main.getCurrentConfiguration('test-config-2.js').then(function(actual) {
+                assertDeepEqual(actual.global, {});
+                assertDeepEqual(actual.sensors, {});
             }).done(done);
         });
 
