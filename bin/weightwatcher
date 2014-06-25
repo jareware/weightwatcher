@@ -52,17 +52,17 @@ if (subcmd === 'sensors') {
 
 } else if (subcmd === 'show') {
 
-    Q.when().then(function() {
-        return subargs.length ? subargs : getAllSensorNames();
-    }).then(function(sensorNames) {
-        return Q.all(sensorNames.map(function(sensorName) {
-            return main.getCurrentReading(sensorName, configFilePath).then(function(currentReading) {
-                if (subargs.length !== 1) {
-                    output(sensorName);
-                }
-                output(currentReading);
-            });
-        }));
+    main.getCurrentConfiguration(configFilePath).then(function(config) {
+        return Q.when(subargs.length ? subargs : _.keys(config.sensors)).then(function(sensorNames) {
+            return Q.all(sensorNames.map(function(sensorName) {
+                return main.getCurrentReading(config, sensorName).then(function(currentReading) {
+                    if (sensorNames.length > 1) {
+                        output(sensorName);
+                    }
+                    output(currentReading);
+                });
+            }));
+        });
     }).done();
 
 } else if (subcmd === 'record') {

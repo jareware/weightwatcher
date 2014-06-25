@@ -11,6 +11,7 @@ return module.exports = {
 
     // MODULE PUBLIC API:
     getCurrentConfiguration: getCurrentConfiguration,
+    getCurrentReading: getCurrentReading,
 
     // Expose specific internals for unit-testing only:
     __test: {
@@ -47,16 +48,26 @@ exports.getCurrentTimestamp = function(configFilePath) {
     });
 };
 
-// Promises the current reading of the named sensor
-exports.getCurrentReading = function(sensorName, configFilePath) {
-    return Q.all([
-        exports.getAvailableSensors(),
-        exports.getCurrentConfiguration(configFilePath)
-    ]).spread(function(sensorModules, config) {
-        var readingProvider = _(sensorModules).where({ sensorName: sensorName }).pluck('getCurrentReading').first();
-        return readingProvider ? readingProvider(config[sensorName]) : Q.reject('No such sensor "' + sensorName + '"');
+// Promises to load the implementation for the named sensor module
+function loadSensorModule(sensorName) {
+    var candidate = path.join(SENSOR_PATH, sensorName + '.js');
+    return FS.isFile(candidate).then(function(isFile) {
+        return isFile ? require(candidate) : Q.reject('Sensor module file "' + candidate + '" not found');
     });
-};
+}
+
+// Promises the current reading of the named sensor
+function getCurrentReading(config, sensorName) {
+    if (!_.isObject(config.sensors[sensorName])) {
+        return Q.reject('Sensor "' + sensorName + '" has not been configured');
+    }
+    return loadSensorModule(sensorName).then(function(sensorModule) {
+        if (!_.isFunction(sensorModule.getCurrentReading)) {
+            return Q.reject('Sensor "' + sensorName + '" does not implement the getCurrentReading method');
+        }
+        return sensorModule.getCurrentReading(config.sensors[sensorName]);
+    });
+}
 
 // Promises the module currently responsible for persisting log entries
 exports.getPersistenceLayer = function() {
