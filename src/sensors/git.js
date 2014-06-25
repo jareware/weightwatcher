@@ -62,12 +62,13 @@ function getRangeStartDate(rangeEndDate, numberOfDays) {
     }
 }
 
+// Promises an array of committer names for the past N days, counting from (and including) rangeEndDate
 function getContributors(sensorConfig, rangeEndDate, execImplementation) {
     if (!rangeEndDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
         return Q.reject('Unparseable rangeEndDate: ' + rangeEndDate);
     }
     var rangeStartDate = getRangeStartDate(rangeEndDate, sensorConfig.contributionDaysCutoff || DEFAULT_CONTRIB_CUTOFF_DAYS);
-    var cmd = 'cd ' + sensorConfig.pwd + '; git log --pretty=format:"%an" --after={' + rangeStartDate + '} --before={' + rangeEndDate + '} --all';
+    var cmd = 'cd ' + sensorConfig.pwd + '; git log --pretty=format:"%an" --after="{' + rangeStartDate + ' 00:00:00}" --before="{' + rangeEndDate + ' 23:59:59}" --all';
     return (execImplementation || exec)(cmd).then(function(output) {
         return _(output.split('\n')).uniq().compact().sort().value();
     });

@@ -18,7 +18,7 @@ describe('sensors/git', function() {
 
         it('commands git & parses output expectedly', function(done) {
             var actualCommand;
-            var expectedCommand = 'cd /dev/null; git log --pretty=format:"%an" --after={2014-03-26} --before={2014-04-01} --all';
+            var expectedCommand = 'cd /dev/null; git log --pretty=format:"%an" --after="{2014-03-26 00:00:00}" --before="{2014-04-01 23:59:59}" --all';
             var execImplementation = function(command) {
                 actualCommand = command;
                 return Q('James Bond\nJames Bond\nErnst Blofeld\nJames Bond\n');
@@ -26,8 +26,8 @@ describe('sensors/git', function() {
             var promisedResult = git.__test.getContributors({ pwd: '/dev/null' }, '2014-04-01', execImplementation);
             var expectedResult = [ 'Ernst Blofeld', 'James Bond' ];
             promisedResult.then(function(actualResult) {
-                assertDeepEqual(actualCommand, expectedCommand)
-                assertDeepEqual(actualResult, expectedResult)
+                assertDeepEqual(actualCommand, expectedCommand);
+                assertDeepEqual(actualResult, expectedResult);
                 done();
             });
         });
