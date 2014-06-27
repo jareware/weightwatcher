@@ -67,10 +67,10 @@ if (subcmd === 'sensors') {
 
 } else if (subcmd === 'record') {
 
-    Q.when().then(function() {
-        return subargs.length ? subargs : getAllSensorNames();
-    }).then(function(sensorNames) {
-        return main.writeLogEntry(sensorNames, configFilePath);
+    main.getCurrentConfiguration(configFilePath).then(function(config) {
+        return Q.when(subargs.length ? subargs : _.keys(config.sensors)).then(function(sensorNames) {
+            return main.writeLogEntry(config, sensorNames);
+        });
     }).then(output).done();
 
 } else if (subcmd === 'viewer') {

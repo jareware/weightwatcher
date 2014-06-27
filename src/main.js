@@ -12,6 +12,7 @@ return module.exports = {
     // MODULE PUBLIC API:
     getCurrentConfiguration: getCurrentConfiguration,
     getCurrentReading: getCurrentReading,
+    writeLogEntry: writeLogEntry,
 
     // Expose specific internals for unit-testing only:
     __test: {
@@ -32,21 +33,19 @@ exports.getAvailableSensors = function() {
 };
 
 // Promises the current timestamp for a new log entry being written
-exports.getCurrentTimestamp = function(configFilePath) {
-    return Q.all([
-        exports.getAvailableSensors(),
-        exports.getCurrentConfiguration(configFilePath)
-    ]).spread(function(sensorModules, config) {
-        var tsProvider = _(sensorModules).filter(function(sensorModule) {
-            return !!sensorModule.getCurrentTimestamp;
-        }).first();
-        if (tsProvider) {
-            return tsProvider.getCurrentTimestamp(config[tsProvider.sensorName]);
-        } else {
-            return Q.reject('No timestamp-providing sensors available (that\'s odd)');
-        }
+function getCurrentTimestamp(config) {
+    var sensorNames = _.keys(config.sensors);
+    var sensorModules = _.map(sensorNames, loadSensorModule);
+    return Q.all(sensorModules).then(function(sensorModules) {
+        return _(sensorNames).zipObject(sensorModules).map(function(sensorModule, sensorName) {
+            if (sensorModule.getCurrentTimestamp) {
+                return _.partial(sensorModule.getCurrentTimestamp, config.sensors[sensorName]);
+            }
+        }).compact().first();
+    }).then(function(provider) {
+        return provider ? provider() : Q.reject('No timestamp-providing sensors configured (consider configuring at least the "git" sensor)');
     });
-};
+}
 
 // Promises to load the implementation for the named sensor module
 function loadSensorModule(sensorName) {
@@ -70,9 +69,9 @@ function getCurrentReading(config, sensorName) {
 }
 
 // Promises the module currently responsible for persisting log entries
-exports.getPersistenceLayer = function() {
+function getPersistenceLayer() {
     return Q(require('./persistence/json'));
-};
+}
 
 // Promises the resolved global configuration object
 function getCurrentConfiguration(configFilePath) {
@@ -99,24 +98,19 @@ function getCurrentConfiguration(configFilePath) {
 }
 
 // Promises to write the current readings of all named sensors to a log entry
-exports.writeLogEntry = function(sensorNames, configFilePath) {
+function writeLogEntry(config, sensorNames) {
+    var currentReadings = _.map(sensorNames, _.partial(getCurrentReading, config));
     return Q.all([
-        exports.getCurrentConfiguration(configFilePath),
-        exports.getCurrentTimestamp(configFilePath),
-        exports.getPersistenceLayer()
-    ]).spread(function(config, currentTimestamp, persistenceLayer) {
-        var readings = _.map(sensorNames, function(sensorName) {
-            return exports.getCurrentReading(sensorName, configFilePath);
-        });
-        return Q.all([ sensorNames, Q.all(readings) ]).spread(function(names, data) {
-            return _(names).zip(data).object().value();
-        }).then(function(payload) {
-            return Q(persistenceLayer.writeLogEntry(config, currentTimestamp, payload)).then(function() {
-                return payload;
-            });
+        getCurrentTimestamp(config),
+        getPersistenceLayer(),
+        Q.all(currentReadings)
+    ]).spread(function(currentTimestamp, persistenceLayer, readings) {
+        var entryData = _.zipObject(sensorNames, readings);
+        return persistenceLayer.writeLogEntry(config, currentTimestamp, entryData).then(function() {
+            return entryData;
         });
     });
-};
+}
 
 // Promises to output the HTML viewer application to the given path
 exports.outputViewerHTML = function(outputPath, configFilePath) {
