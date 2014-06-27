@@ -55,31 +55,4 @@ describe('main', function() {
 
     });
 
-    describe('writeLogEntry', function() {
-
-        it('persists the expected data', function(done) {
-            var entries = [];
-            main.getPersistenceLayer = _.constant({
-                writeLogEntry: function(config, entryUID, entryData) {
-                    entries.push([ entryUID, entryData ]);
-                }
-            });
-            main.getAvailableSensors = _.constant(Q([{
-                sensorName: 'fakeSensor',
-                getCurrentTimestamp: function() {
-                    return '12:34:56';
-                },
-                getCurrentReading: function() {
-                    return { count: 123 };
-                }
-            }]));
-            main.writeLogEntry([ 'fakeSensor' ], '.weightwatcher-config.js').then(function(returnValue) {
-                assertDeepEqual(entries, [[ '12:34:56', { fakeSensor: { count: 123 }}]]);
-                assertDeepEqual(returnValue, { fakeSensor: { count: 123 }});
-            }).done(done);
-
-        });
-
-    });
-
 });
