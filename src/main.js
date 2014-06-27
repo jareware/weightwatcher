@@ -13,23 +13,8 @@ return module.exports = {
     getCurrentConfiguration: getCurrentConfiguration,
     getCurrentReading: getCurrentReading,
     writeLogEntry: writeLogEntry,
+    outputViewerHTML: outputViewerHTML
 
-    // Expose specific internals for unit-testing only:
-    __test: {
-        // TODO
-    }
-
-};
-
-// Promises an array of modules, with the "sensorName" property attached
-exports.getAvailableSensors = function() {
-    return FS.list(SENSOR_PATH).then(function(fileNames) {
-        return fileNames.map(function(fileName) {
-            var module = require(path.join(SENSOR_PATH, fileName));
-            module.sensorName = path.basename(fileName, '.js');
-            return module;
-        });
-    });
 };
 
 // Promises the current timestamp for a new log entry being written
@@ -113,16 +98,15 @@ function writeLogEntry(config, sensorNames) {
 }
 
 // Promises to output the HTML viewer application to the given path
-exports.outputViewerHTML = function(outputPath, configFilePath) {
+function outputViewerHTML(config, outputPath) {
+    if (!config.global.dataFile) {
+        return Q.reject('No data file configured (config.global.dataFile should point to one)');
+    }
     var outputFile = path.join(path.resolve(outputPath), 'weightwatcher.html');
-    return Q().then(function() {
-        return FS.makeTree(outputPath); // create the destination directories if missing
-    }).then(function() {
-        return exports.getCurrentConfiguration(configFilePath);
-    }).then(function(config) {
+    return FS.makeTree(outputPath).then(function() { // create the destination directories if missing
         return Q.all([ 'viewer.html', 'viewer.css', 'viewer.js' ].map(function(inputFile) {
             return FS.read(path.join(VIEWER_PATH, inputFile));
-        }).concat(FS.read(config.dataFile)));
+        }).concat(FS.read(config.global.dataFile)));
     }).spread(function(htmlContent, cssContent, jsContent, dataContent) {
         var inlinedSources = {
             'WEIGHTWATCHER_DATA = undefined':               'WEIGHTWATCHER_DATA = ' + dataContent,
@@ -136,4 +120,4 @@ exports.outputViewerHTML = function(outputPath, configFilePath) {
     }).then(function() {
         return outputFile;
     });
-};
+}

@@ -75,7 +75,9 @@ if (subcmd === 'sensors') {
 
 } else if (subcmd === 'viewer') {
 
-    main.outputViewerHTML(subargs[0] || '.', configFilePath).then(output).done();
+    main.getCurrentConfiguration(configFilePath).then(function(config) {
+        return main.outputViewerHTML(config, subargs[0] || '.', configFilePath);
+    }).then(output).done();
 
 } else {
 
